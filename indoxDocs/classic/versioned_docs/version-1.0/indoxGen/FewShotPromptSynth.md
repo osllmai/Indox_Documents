@@ -1,5 +1,4 @@
-
-# FewShotPromptSynth
+# Few Shot Prompt
 
 ## Overview
 **FewShotPromptSynth** is a Python class designed for generating synthetic data based on few-shot learning examples and user-provided instructions. It utilizes language models to generate diverse datasets, leveraging pre-existing examples for guidance. The class supports outputting the generated data as a pandas DataFrame and allows saving the results to an Excel file.

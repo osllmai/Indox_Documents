@@ -266,15 +266,6 @@ const sidebars: SidebarsConfig = {
       ],
       collapsed: false,
     },
-    {
-      type: "category",
-      label: "Tutorial Extras",
-      items: [
-        "tutorial-extras/manage-docs-versions",
-        "tutorial-extras/translate-your-site",
-      ],
-      collapsed: true,
-    },
   ],
 };
 

@@ -1,4 +1,4 @@
-# GenerativeDataSynth
+# Generative Data
 
 ## Overview
 

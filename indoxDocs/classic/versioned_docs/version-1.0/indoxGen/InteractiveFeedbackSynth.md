@@ -1,4 +1,4 @@
-# InteractiveFeedbackSynth
+# Interactive Feedback
 
 ## Overview
 

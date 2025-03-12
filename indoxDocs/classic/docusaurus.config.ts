@@ -8,7 +8,7 @@ const config: Config = {
   title: "Indox Ecosystem",
   tagline:
     "The Indox Ecosystem offers integrated AI tools for data workflows. Our four components (IndoxArcg, IndoxMiner, IndoxJudge, and IndoxGen) enhance AI applications with advanced retrieval, extraction, evaluation, and generation capabilities, supporting multiple document formats and LLM providers.",
-  favicon: "img/favicon.ico",
+  favicon: "img/logo.png",
 
   // Set the production url of your site here
   url: "https://docs.osllm.ai",
