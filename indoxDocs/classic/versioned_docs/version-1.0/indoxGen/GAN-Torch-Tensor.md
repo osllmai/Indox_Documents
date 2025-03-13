@@ -14,8 +14,7 @@ These tools extend the capabilities of the IndoxGen project by offering easy-to-
 - [Configuration](#configuration)
 - [Evaluation Methods](#evaluation-methods)
 - [API Reference](#api-reference)
-- [Contributing](#contributing)
-- [License](#license)
+
 
 
 ---
@@ -192,21 +191,3 @@ We provide tools to visualize the distributions of real and synthetic data side-
 
 ---
 
-## Contributing
-
-Contributions to **IndoxGen-Torch** and **IndoxGen-Tensor** are welcome. Follow these steps to contribute:
-
-1. Fork the repository.
-2. Create a new branch for your feature or bug fix.
-3. Add your changes and write tests if applicable.
-4. Submit a pull request with a clear description of your changes.
-
-We encourage contributions that improve the GAN models, add more data handling features, or extend the functionality of the framework.
-
----
-
-## License
-
-**IndoxGen-Torch** and **IndoxGen-Tensor** are released under the MIT License. See [LICENSE.md](LICENSE.md) for details.
-
----

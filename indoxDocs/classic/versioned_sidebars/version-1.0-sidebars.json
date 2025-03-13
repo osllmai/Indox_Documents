@@ -32,7 +32,7 @@
             "indoxArcg/data_loader/Structured-Data-Loaders",
             "indoxArcg/data_loader/Scientific-Loaders",
             "indoxArcg/data_loader/Web-Loaders",
-            "indoxArcg/data_loader/text-Loaders"
+            "indoxArcg/data_loader/Text-Loaders"
           ]
         },
         {
@@ -64,7 +64,7 @@
           "type": "category",
           "label": "Vector Stores",
           "items": [
-            "indoxArcg/vectorstores/README",
+            "indoxArcg/vectorstores/index",
             "indoxArcg/vectorstores/embedded-libraries",
             "indoxArcg/vectorstores/purpose-built-vector-databases",
             "indoxArcg/vectorstores/general-purpose-vector-databases",

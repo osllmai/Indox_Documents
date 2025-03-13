@@ -56,7 +56,3 @@ The `classify` method automatically generates a bar plot of predicted probabilit
 ## Advanced Usage
 
 For advanced users, you can directly use the `preprocess`, `predict`, and `visualize` methods for greater control.
-
-```
-
-```

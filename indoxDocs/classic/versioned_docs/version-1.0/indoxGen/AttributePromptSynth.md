@@ -11,7 +11,6 @@
 - [Usage](#usage)
 - [API Reference](#api-reference)
 - [Examples](#examples)
-- [Contributing](#contributing)
 
 ## Installation
 
@@ -121,11 +120,3 @@ print(added_row)
 
 ```
 
-## Contributing
-
-Contributions to improve `AttributePromptSynth` are welcome. To contribute, please follow these steps:
-
-1. Fork the repository.
-2. Create a new branch for your feature.
-3. Add your changes and write tests if applicable.
-4. Submit a pull request with a clear description of your changes.

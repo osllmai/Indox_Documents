@@ -11,7 +11,6 @@
 3. [Usage](#usage)
 4. [API Reference](#api-reference)
 5. [Examples](#examples)
-6. [Contributing](#contributing)
 
 ## Installation
 
@@ -175,12 +174,3 @@ updated_df = dataset.run()
 print(updated_df)
 dataset.save_to_excel("updated_planet_data.xlsx")
 ```
-
-## Contributing
-
-Contributions to the `PromptBasedSynth` class are welcome. To contribute:
-
-1. Fork the repository.
-2. Create a new branch for your feature.
-3. Add your changes and write tests if applicable.
-4. Submit a pull request with a clear description of your changes.

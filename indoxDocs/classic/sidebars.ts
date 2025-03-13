@@ -117,6 +117,11 @@ const sidebars: SidebarsConfig = {
             "indoxMiner/classification/MobileCLIP",
             "indoxMiner/classification/RemoteCLIP",
             "indoxMiner/classification/SigLIP",
+            "indoxMiner/classification/ViT",
+            "indoxMiner/classification/MetaCLIP",
+            "indoxMiner/classification/BioCLIP",
+            "indoxMiner/classification/AltCLIP",
+            "indoxMiner/classification/BiomedCLIP",
           ],
         },
         {

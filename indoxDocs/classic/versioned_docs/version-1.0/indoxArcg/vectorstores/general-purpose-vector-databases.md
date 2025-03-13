@@ -246,7 +246,7 @@ assert len(embed_model.embed_query("test")) == 768, "Mismatch with DB schema"
 
 ## Next Steps
 
-[Return to Vectorstore Hub](../README.md) | [Graph Databases ➡️](graph-databases.md)
+[Return to Vectorstore Hub](index.md) | [Graph Databases ➡️](graph-databases.md)
 
 ```
 

@@ -188,6 +188,4 @@ The `RemoteCLIPClassifier` is a powerful tool for image classification, supporti
 - Custom label support.
 - Visualization of results.
 
-For further details, refer to the official [documentation](https://indoxminer.readthedocs.io/).
-
 ---

@@ -182,4 +182,3 @@ The `MobileCLIPClassifier` provides a powerful, lightweight solution for mobile-
 - Clear and intuitive visualizations.
 - Seamless integration with `IndoxMiner` for broader use cases.
 
-Explore the [full documentation](https://indoxminer.readthedocs.io/) for further details.

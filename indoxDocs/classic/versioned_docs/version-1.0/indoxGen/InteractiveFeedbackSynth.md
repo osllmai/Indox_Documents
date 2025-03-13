@@ -11,7 +11,6 @@
 - [Usage](#usage)
 - [API Reference](#api-reference)
 - [Examples](#examples)
-- [Contributing](#contributing)
 
 ## Installation
 
@@ -145,16 +144,3 @@ regeneration_feedback = "Ensure more diversity in department assignments and a w
 updated_data = generator.user_review_and_regenerate(accepted_rows, regenerate_rows, regeneration_feedback, min_score=0.7)
 print(updated_data.head())
 ```
-
-This example demonstrates how to generate employee data, review it, and then regenerate specific rows based on human feedback.
-
-## Contributing
-
-Contributions to improve `InteractiveFeedbackSynth` are welcome. Please follow these steps:
-
-1. Fork the repository.
-2. Create a new branch for your feature.
-3. Add your changes and write tests if applicable.
-4. Submit a pull request with a clear description of your changes.
-
-When contributing, please ensure that you maintain the existing code style and add appropriate documentation for any new features or changes.

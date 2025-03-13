@@ -107,5 +107,3 @@ This makes IndoxMiner a powerful **multi-task AI framework** combining **text, i
 ## Contact
 
 For issues or contributions, please submit a pull request or open an issue in IndoxMiner’s GitHub repository.
-
-🚀 **Happy Coding with IndoxMiner!** 🚀

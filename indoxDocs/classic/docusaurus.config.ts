@@ -48,12 +48,17 @@ const config: Config = {
           sidebarPath: "./sidebars.ts",
           // Remove the "edit this page" links
           editUrl: undefined,
-          lastVersion: "1.0",
-          onlyIncludeVersions: ["1.0"],
+          lastVersion: "1.1",
+          onlyIncludeVersions: ["1.1", "1.0"],
           versions: {
+            "1.1": {
+              label: "1.1",
+              path: "",
+              banner: "none",
+            },
             "1.0": {
               label: "1.0",
-              path: "",
+              path: "1.0",
               banner: "none",
             },
           },
@@ -114,6 +119,27 @@ const config: Config = {
           position: "right",
         },
       ],
+    },
+    // Algolia search configuration
+    algolia: {
+      // The application ID provided by Algolia
+      appId: "YOUR_APP_ID",
+      // Public API key: it is safe to commit it
+      apiKey: "YOUR_SEARCH_API_KEY",
+      indexName: "indox",
+      // Optional: see doc section below
+      contextualSearch: true,
+      // Optional: Specify domains where the navigation should occur through window.location instead on history.push
+      externalUrlRegex: "external\\.com|domain\\.com",
+      // Optional: Replace parts of the item URLs from Algolia
+      replaceSearchResultPathname: {
+        from: "/docs/",
+        to: "/",
+      },
+      // Optional: Algolia search parameters
+      searchParameters: {},
+      // Optional: path for search page that enabled by default (`false` to disable it)
+      searchPagePath: "search",
     },
     footer: {
       style: "dark",

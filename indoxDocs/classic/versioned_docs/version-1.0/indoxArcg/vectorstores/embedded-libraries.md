@@ -103,7 +103,7 @@ answer = retriever.invoke(query=query)
 
 ## Next Steps
 
-[Return to Vectorstore Hub](../README.md) | [Purpose-Built Databases ➡️](purpose-built-vector-databases.md)
+[Return to Vectorstore Hub](index.md) | [Purpose-Built Databases ➡️](purpose-built-vector-databases.md)
 
 ```
 

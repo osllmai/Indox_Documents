@@ -125,13 +125,9 @@ The `classify` method generates bar plots that display the top predictions along
 
 Refer to the individual documentation pages for detailed information about each classifier:
 
-- [SigCLIPClassifier Documentation](./sigclip.md)
-- [ViTClassifier Documentation](./vit.md)
-- [MetaCLIPClassifier Documentation](./metaclip.md)
-- [MobileCLIPClassifier Documentation](./mobileclip.md)
-- [BioCLIPClassifier Documentation](./bioclip.md)
-- [AltCLIPClassifier Documentation](./altclip.md)
-- [RemoteCLIPClassifier Documentation](./remoteclip.md)
+- [SigCLIPClassifier Documentation](SigLIP.md)
+- [MobileCLIPClassifier Documentation](MobileCLIP.md)
+- [RemoteCLIPClassifier Documentation](RemoteCLIP.md)
 
 ---
 
@@ -145,5 +141,3 @@ The classification module in `IndoxMiner` is more than just a collection of mode
 - Scalable batch processing for large datasets.
 
 ---
-
-Feel free to explore the [full documentation](https://indoxminer.readthedocs.io/) for additional details and advanced use cases.

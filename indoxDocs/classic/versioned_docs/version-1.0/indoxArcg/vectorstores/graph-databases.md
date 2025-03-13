@@ -161,7 +161,7 @@ relationships = neo4j_db.search_relationships_by_entity(
 
 ## Next Steps
 
-[Return to Vectorstore Hub](../README.md) | [Embedded Libraries ➡️](embedded-libraries.md)
+[Return to Vectorstore Hub](index.md) | [Embedded Libraries ➡️](embedded-libraries.md)
 
 ```
 

@@ -1,15 +1,17 @@
 # Purpose-Built Vector Databases
 
-This guide covers **indoxArcg** integrations with specialized vector databases optimized for high-performance similarity search. 
+This guide covers **indoxArcg** integrations with specialized vector databases optimized for high-performance similarity search.
 
 ---
 
 ## Supported Vectorstores
 
 ### 1. Milvus
+
 **Cloud-native vector database for scalable similarity search.**
 
 #### Installation
+
 ```bash
 # Install Docker
 docker --version
@@ -23,6 +25,7 @@ docker-compose up -d
 ```
 
 #### indoxArcg Integration
+
 ```python
 from pymilvus import connections
 connections.connect(host='127.0.0.1', port='19530')
@@ -34,9 +37,11 @@ db = MilvusVectorStore(collection_name="indoxarcg_collection", embedding=embed)
 ---
 
 ### 2. Pinecone
+
 **Managed vector database for production AI applications.**
 
 #### Setup
+
 ```python
 from pinecone import ServerlessSpec
 
@@ -48,6 +53,7 @@ pc.create_index(
 ```
 
 #### indoxArcg Usage
+
 ```python
 from indoxArcg.vector_stores import PineconeVectorStore
 db = PineconeVectorStore(
@@ -61,9 +67,11 @@ db.add(docs=docs)
 ---
 
 ### 3. Qdrant
+
 **High-performance open-source vector search engine.**
 
 #### Configuration
+
 ```python
 from indoxArcg.vector_stores import Qdrant
 
@@ -78,14 +86,17 @@ qdrant_db = Qdrant(
 ---
 
 ### 4. Weaviate
+
 **Semantic search engine with vector+graph hybrid capabilities.**
 
 #### Docker Setup
+
 ```bash
 docker run -d -p 8080:8080 semitechnologies/weaviate:latest
 ```
 
 #### indoxArcg Integration
+
 ```python
 from indoxArcg.vector_stores import WeaviateVectorStore
 db = WeaviateVectorStore(
@@ -98,9 +109,11 @@ db = WeaviateVectorStore(
 ---
 
 ### 5. Chroma
+
 **Lightweight embedding store for AI applications.**
 
 #### Quick Start
+
 ```python
 from indoxArcg.vector_stores import ChromaVectorStore
 db = ChromaVectorStore(
@@ -112,9 +125,11 @@ db = ChromaVectorStore(
 ---
 
 ### 6. DeepLake
+
 **Vector store for deep learning datasets.**
 
 #### Usage
+
 ```python
 from indoxArcg.vector_stores import Deeplake
 db = Deeplake(
@@ -127,9 +142,11 @@ db.add(docs=processed_docs)
 ---
 
 ### 7. Vearch
+
 **Distributed vector search platform.**
 
 #### Configuration
+
 ```python
 from indoxArcg.vector_stores import Vearch
 
@@ -146,7 +163,7 @@ db.create_space_schema()
 ## Comparison of Purpose-Built Stores
 
 | Vectorstore | Scalability | Hybrid Search | Cloud Managed | indoxArcg Setup Complexity |
-|-------------|-------------|---------------|---------------|----------------------------|
+| ----------- | ----------- | ------------- | ------------- | -------------------------- |
 | Milvus      | High        | ✅            | Self-hosted   | Medium                     |
 | Pinecone    | Very High   | ❌            | Fully Managed | Low                        |
 | Qdrant      | High        | ✅            | Both          | Medium                     |
@@ -160,12 +177,15 @@ db.create_space_schema()
 ## Troubleshooting
 
 ### Common Issues
-1. **Connection Timeouts**  
+
+1. **Connection Timeouts**
+
    - Verify ports (`19530` for Milvus, `8080` for Weaviate)
    - Check Docker container status
 
 2. **Dimension Mismatch**  
    Ensure embedding dimensions match index configuration:
+
    ```python
    print(embed.embed_query("test").shape)  # Should match vectorstore config
    ```
@@ -181,7 +201,10 @@ db.create_space_schema()
 ---
 
 ## Next Steps
-[Return to Vectorstore Hub](../README.md) | [General-Purpose Databases ➡️](general-purpose-databases.md)
+
+[Return to Vectorstore Hub](index.md) | [General-Purpose Databases ➡️](general-purpose-vector-databases.md)
+
 ```
 
 ---
+```

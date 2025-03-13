@@ -124,7 +124,7 @@ gemini = GoogleAi(
 )
 ```
 
-### 5. Ollama (Local)
+### 5. Ollama
 
 Setup:
 

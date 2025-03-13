@@ -7,13 +7,12 @@
 The framework leverages **GANs** for structured data generation and **LLMs** for unstructured data generation, ensuring that the two are coherent and contextually aligned.
 
 ## Table of Contents
+
 - [Installation](#installation)
 - [Usage](#usage)
   - [Example: GAN and LLM Hybrid Pipeline](#gan-and-llm-hybrid-pipeline)
 - [Configuration](#configuration)
 - [API Reference](#api-reference)
-- [Contributing](#contributing)
-- [License](#license)
 
 ---
 
@@ -27,12 +26,13 @@ pip install openai  # Or any other LLM provider library
 pip install python-dotenv  # For managing API keys securely
 ```
 
-Additionally, make sure you have PyTorch or TensorFlow (depending on your system configuration) installed for the GAN-based part.
----
+## Additionally, make sure you have PyTorch or TensorFlow (depending on your system configuration) installed for the GAN-based part.
 
 ## Usage
 
-### Example: GAN and LLM Hybrid Pipeline
+### Example
+
+#### GAN and LLM Hybrid Pipeline
 
 ```python
 import pandas as pd
@@ -103,15 +103,19 @@ synthetic_data = synth_pipeline.generate(num_samples)
 # Preview the generated synthetic data
 print(synthetic_data.head())
 ```
+
 ---
 
 ## Configuration
 
 ### GAN Configuration:
+
 The **TabularGANConfig** class allows customization of the GAN model for numerical data generation. You can modify parameters like the number of layers, learning rates, and batch sizes for fine-tuning.
 
 ### LLM Configuration:
+
 In addition to configuring the GAN, you also set up the LLM with the following parameters:
+
 - **generator_llm**: The language model used to generate text (e.g., OpenAI, Nemotron).
 - **judge_llm**: A model for judging the quality of generated text.
 - **columns**: The columns in the dataset that represent text data.
@@ -122,28 +126,15 @@ In addition to configuring the GAN, you also set up the LLM with the following p
 ## API Reference
 
 ### `initialize_gan_synth`:
+
 Used to initialize and configure the GAN for generating synthetic numerical data.
 
 ### `initialize_llm_synth`:
+
 Initializes and configures the LLM for generating synthetic text data.
 
 ### `TextTabularSynth`:
+
 Combines the GAN and LLM pipelines into one hybrid pipeline for generating synthetic data with both numerical and text fields.
-
----
-
-## Contributing
-
-Contributions to the **Hybrid LLM-GAN** project are welcome. Follow these steps to contribute:
-1. Fork the repository.
-2. Create a new branch for your feature or bug fix.
-3. Add your changes and write tests if applicable.
-4. Submit a pull request with a clear description of your changes.
-
----
-
-## License
-
-**Hybrid LLM-GAN** is released under the MIT License. See the [LICENSE](LICENSE) file for more details.
 
 ---

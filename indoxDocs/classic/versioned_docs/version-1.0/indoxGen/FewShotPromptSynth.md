@@ -8,8 +8,6 @@
 - [Language Model Setup](#language-model-setup)
 - [Usage](#usage)
 - [API Reference](#api-reference)
-- [Examples](#examples)
-- [Contributing](#contributing)
 
 ## Installation
 To use **FewShotPromptSynth**, you need to have Python 3.9+ installed. You can install the required package using pip:
@@ -92,11 +90,3 @@ Saves the generated DataFrame to an Excel file.
 - `df` (pd.DataFrame): The DataFrame to be saved.
 - Raises: `ValueError` if the DataFrame is empty or cannot be saved.
 
-
-## Contributing
-Contributions to improve **FewShotPromptSynth** are welcome. Please follow these steps:
-
-1. Fork the repository.
-2. Create a new branch for your feature.
-3. Add your changes and write tests if applicable.
-4. Submit a pull request with a clear description of your changes.
