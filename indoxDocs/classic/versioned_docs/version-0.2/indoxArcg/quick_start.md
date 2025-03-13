@@ -5,7 +5,7 @@
 ## Overview
 
 This documentation provides a detailed explanation of how to use the
-`IndoxRetrievalAugmentation` package for QA model and embedding
+`IndoxArcg` package for QA model and embedding
 selection, document splitting, and storing in a vector store.
 
 ## Setup
@@ -52,7 +52,7 @@ from indoxArcg.embeddings import OpenAiEmbedding
 ### Initialize indoxArcg
 
 ```python
-openai_qa = OpenAiQA(api_key=OPENAI_API_KEY,model="gpt-3.5-turbo-0125")
+openai_qa = OpenAi(api_key=OPENAI_API_KEY,model="gpt-3.5-turbo-0125")
 openai_embeddings = OpenAiEmbedding(model="text-embedding-3-small",openai_api_key=OPENAI_API_KEY)
 ```
 
