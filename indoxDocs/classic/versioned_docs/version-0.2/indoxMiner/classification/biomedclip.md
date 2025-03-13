@@ -1,4 +1,4 @@
-# BiomedCLIP Documentation
+# BiomedCLIP
 
 ## Overview
 

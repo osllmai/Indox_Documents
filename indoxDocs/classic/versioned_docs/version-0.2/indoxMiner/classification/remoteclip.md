@@ -1,4 +1,4 @@
-# RemoteCLIP Documentation
+# RemoteCLIP
 
 ## Overview
 

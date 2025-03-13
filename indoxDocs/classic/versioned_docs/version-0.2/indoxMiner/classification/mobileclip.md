@@ -1,4 +1,4 @@
-# MobileCLIP Documentation
+# MobileCLIP
 
 ## Overview
 
@@ -90,4 +90,3 @@ The `classify` method generates bar plots displaying predicted probabilities, al
 - Customizable for application-specific requirements.
 
 For more details, refer to the main [IndoxMiner Classification Module Documentation](./Classification_Module.md).
-

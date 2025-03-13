@@ -1,4 +1,4 @@
-# MetaCLIP Documentation
+# MetaCLIP
 
 ## Overview
 

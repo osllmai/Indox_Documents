@@ -1,4 +1,4 @@
-# AltCLIP Documentation
+# AltCLIP
 
 ## Overview
 

@@ -1,4 +1,4 @@
-# SigCLIP Documentation
+# SigCLIP
 
 ## Overview
 

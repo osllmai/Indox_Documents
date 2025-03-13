@@ -1,4 +1,4 @@
-# BioCLIP Documentation
+# BioCLIP
 
 ## Overview
 

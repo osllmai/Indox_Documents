@@ -1,4 +1,4 @@
-# ViT Documentation
+# ViT
 
 ## Overview
 
