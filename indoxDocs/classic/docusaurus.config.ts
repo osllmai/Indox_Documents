@@ -40,6 +40,17 @@ const config: Config = {
   // Add Mermaid theme
   themes: ["@docusaurus/theme-mermaid"],
 
+  // Add custom head tags
+  headTags: [
+    {
+      tagName: "meta",
+      attributes: {
+        name: "algolia-site-verification",
+        content: "392892923820A060",
+      },
+    },
+  ],
+
   presets: [
     [
       "classic",
@@ -48,17 +59,17 @@ const config: Config = {
           sidebarPath: "./sidebars.ts",
           // Remove the "edit this page" links
           editUrl: undefined,
-          lastVersion: "1.1",
-          onlyIncludeVersions: ["1.1", "1.0"],
+          lastVersion: "0.2",
+          onlyIncludeVersions: ["0.2", "0.1"],
           versions: {
-            "1.1": {
-              label: "1.1",
+            "0.2": {
+              label: "0.2",
               path: "",
               banner: "none",
             },
-            "1.0": {
-              label: "1.0",
-              path: "1.0",
+            "0.1": {
+              label: "0.1",
+              path: "0.1",
               banner: "none",
             },
           },
@@ -123,9 +134,9 @@ const config: Config = {
     // Algolia search configuration
     algolia: {
       // The application ID provided by Algolia
-      appId: "YOUR_APP_ID",
+      appId: "YOUR_APP_ID", // You'll need to replace this with your actual App ID
       // Public API key: it is safe to commit it
-      apiKey: "YOUR_SEARCH_API_KEY",
+      apiKey: "YOUR_SEARCH_API_KEY", // You'll need to replace this with your actual Search API Key
       indexName: "indox",
       // Optional: see doc section below
       contextualSearch: true,
