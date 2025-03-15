@@ -18,17 +18,19 @@ jobs:
       - name: Gather Deployment Information
         id: gather_info
         run: |
-          echo "TIMESTAMP=$(date -u "+%A, %B %d %Y, %I:%M:%S %p UTC")" >> $GITHUB_ENV
+          echo "TIMESTAMP=$(date -u \"+%A, %B %d %Y, %I:%M:%S %p UTC\")" >> $GITHUB_ENV
           echo "REPO=${{ github.repository }}" >> $GITHUB_ENV
           echo "MARKDOWN_URL=https://github.com/osllmai/Indox_Documents/blob/master/new_files/README.md" >> $GITHUB_ENV
+          echo "TAG_NAME=v$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
 
-      - name: Load Markdown Content
-        id: load_markdown
+      - name: Create and Push Git Tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          MARKDOWN_CONTENT=$(curl -sL https://raw.githubusercontent.com/osllmai/Indox_Documents/master/new_files/README.md | head -c 2000)
-          echo "MARKDOWN_CONTENT<<EOF" >> $GITHUB_ENV
-          echo "$MARKDOWN_CONTENT" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
 
       - name: Send GitHub Event Notification to Discord
         env:
@@ -38,7 +40,7 @@ jobs:
             --arg timestamp "$TIMESTAMP" \
             --arg repo "$REPO" \
             --arg markdown_url "$MARKDOWN_URL" \
-            --arg markdown_content "$MARKDOWN_CONTENT" \
+            --arg tag "$TAG_NAME" \
             '{
               "username": "GitHub Bot",
               "avatar_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
@@ -47,7 +49,7 @@ jobs:
                   { "name": "📅 Timestamp", "value": $timestamp, "inline": false },
                   { "name": "📂 Repository", "value": "[\($repo)](https://github.com/\($repo))", "inline": false },
                   { "name": "📜 Markdown Documentation", "value": "[Click here](\($markdown_url))", "inline": false },
-                  { "name": "📖 Markdown Content (Preview)", "value": $markdown_content, "inline": false }
+                  { "name": "🏷️ Tag", "value": "\($tag)", "inline": false }
                 ]
               }]
             }')
