@@ -31,18 +31,15 @@ jobs:
       - name: Load README.md Content
         id: load_markdown
         run: |
-          # Read local README.md and limit to 800 characters
-          MARKDOWN_CONTENT=$(cat README.md | head -c 800)
+          # Read local README.md and limit to 1500 characters
+          MARKDOWN_CONTENT=$(cat README.md | head -c 1500)
 
           # Remove Markdown formatting (e.g., #, **, etc.)
           PLAIN_TEXT=$(echo "$MARKDOWN_CONTENT" | sed -e 's/#//g' -e 's/\*\*//g' -e 's/`//g')
 
-          # Add GitHub repository link at the end
-          PLAIN_TEXT="$PLAIN_TEXT\n\nGitHub Repository: https://github.com/osllmai/Indox_Documents"
-
           # Fallback if empty
           if [ -z "$PLAIN_TEXT" ]; then
-            PLAIN_TEXT="README.md could not be loaded.\n\nGitHub Repository: https://github.com/osllmai/Indox_Documents"
+            PLAIN_TEXT="README.md could not be loaded."
           fi
 
           # Store with heredoc to handle newlines
