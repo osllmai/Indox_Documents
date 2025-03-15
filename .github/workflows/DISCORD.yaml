@@ -90,11 +90,7 @@ jobs:
                       "value": "[\($repo)](https://github.com/\($repo))",
                       "inline": false
                     },
-                    {
-                      "name": "📜 Markdown Documentation",
-                      "value": "[Click here](\($markdown_url))\n\nMarkdown Preview:\n```\n\($markdown_content)\n```",
-                      "inline": false
-                    },
+                    
                     {
                       "name": "🏷️ Tag",
                       "value": "\($tag) - \($timestamp)",
