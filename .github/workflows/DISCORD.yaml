@@ -32,7 +32,7 @@ jobs:
         id: load_markdown
         run: |
           # Read local README.md and limit to 1500 characters
-          MARKDOWN_CONTENT=$(cat README.md | head -c 1500)
+          MARKDOWN_CONTENT=$(cat README.md | head -c 500)
 
           # Fallback if empty
           if [ -z "$MARKDOWN_CONTENT" ]; then
