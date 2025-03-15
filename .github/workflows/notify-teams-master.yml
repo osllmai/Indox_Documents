@@ -2,7 +2,7 @@ name: GitHub to Teams Notification (Master)
 
 on:
   push:
-    branches: [ "master"  ]
+    branches: [ "master" ]
   workflow_dispatch:
 
 jobs:
@@ -38,6 +38,29 @@ jobs:
           echo "CHANGED_FILES=${CHANGED_FILES}" >> $GITHUB_ENV
           echo "FILE_COUNT=$FILE_COUNT" >> $GITHUB_ENV
 
+      - name: Load README.md Content
+        id: load_markdown
+        run: |
+          # Read local README.md and limit to 1500 characters
+          MARKDOWN_CONTENT=$(cat README.md | head -c 1500)
+
+          # Remove Markdown formatting (e.g., #, **, etc.)
+          PLAIN_TEXT=$(echo "$MARKDOWN_CONTENT" | sed -e 's/#//g' -e 's/\*\*//g' -e 's/`//g')
+
+          # Add "Continue reading" link at the end
+          PLAIN_TEXT="$PLAIN_TEXT\n\nTo continue reading, please visit: https://github.com/${{ github.repository }}"
+
+          # Fallback if empty
+          if [ -z "$PLAIN_TEXT" ]; then
+            PLAIN_TEXT="README.md could not be loaded. To view the documentation, please visit: https://github.com/${{ github.repository }}"
+          fi
+
+          # Store with heredoc to handle newlines
+          delimiter=$(openssl rand -hex 6)
+          echo "PLAIN_TEXT<<${delimiter}" >> $GITHUB_ENV
+          echo "$PLAIN_TEXT" >> $GITHUB_ENV
+          echo "${delimiter}" >> $GITHUB_ENV
+
       - name: Send GitHub Event Notification to Microsoft Teams
         env:
           WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_MASTER_URL }}
@@ -57,6 +80,10 @@ jobs:
             MESSAGE+="📑 Files Changed ($FILE_COUNT):\\n\\n"
             MESSAGE+="$CHANGED_FILES\\n\\n"
           fi
+
+          # Add README.md content to the message
+          MESSAGE+="📜 Documentation Update Preview:\\n\\n"
+          MESSAGE+="$PLAIN_TEXT\\n\\n"
 
           MESSAGE+="🔄 Status: IN_PROGRESS\\n\\n"
 
