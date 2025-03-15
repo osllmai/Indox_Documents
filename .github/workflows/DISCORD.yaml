@@ -1,14 +1,14 @@
       - name: Load README.md Content
         id: load_markdown
         run: |
-          MARKDOWN_CONTENT=$(curl -sL https://raw.githubusercontent.com/osllmai/Indox_Documents/master/README.md | head -c 1500 | jq -Rs .)
-          echo "MARKDOWN_CONTENT=$MARKDOWN_CONTENT" >> $GITHUB_ENV
+          curl -sL https://raw.githubusercontent.com/osllmai/Indox_Documents/master/README.md | head -c 1500 > markdown_content.txt
+          echo "MARKDOWN_CONTENT=$(jq -Rs . < markdown_content.txt)" >> $GITHUB_ENV
 
       - name: Send GitHub Event Notification to Discord
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_MASTER_URL }}
         run: |
-          set -x  # Enable debugging
+          MARKDOWN_CONTENT=$(jq -Rs . < markdown_content.txt)
 
           JSON_PAYLOAD=$(jq -n \
             --arg timestamp "$TIMESTAMP" \
@@ -26,37 +26,14 @@
                   "description": "We are excited to announce the latest release of our project!",
                   "fields": [
                     {
-                      "name": "📅 Timestamp",
-                      "value": $timestamp,
-                      "inline": false
-                    },
-                    {
-                      "name": "📂 Repository",
-                      "value": "[\($repo)](https://github.com/\($repo))",
-                      "inline": false
-                    },
-                    {
                       "name": "📜 Markdown Documentation",
-                      "value": "[Click here](\($markdown_url))\n\nMarkdown Preview:\n```\n\($markdown_content | sub("\n";" "))\n```",
-                      "inline": false
-                    },
-                    {
-                      "name": "🏷️ Tag",
-                      "value": "\($tag) - \($timestamp)",
-                      "inline": false
-                    },
-                    {
-                      "name": "🚀 Version",
-                      "value": "Release \($version)",
+                      "value": "[Click here](\($markdown_url))\n\nMarkdown Preview:\n```\n\($markdown_content)\n```",
                       "inline": false
                     }
                   ]
                 }
               ]
             }')
-
-          # Validate JSON formatting before sending
-          echo "$JSON_PAYLOAD" | jq .
 
           # Send to Discord webhook
           curl -H "Content-Type: application/json" -X POST -d "$JSON_PAYLOAD" "$DISCORD_WEBHOOK_URL"
