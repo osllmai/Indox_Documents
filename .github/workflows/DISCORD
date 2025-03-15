@@ -1,0 +1,78 @@
+name: GitHub to Discord Notification (Master)
+
+on:
+  push:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  notify_discord:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          clean: false
+
+      - name: Gather Deployment Information
+        id: gather_info
+        run: |
+          echo "DEPLOY_NUMBER=#${{ github.run_number }}" >> $GITHUB_ENV
+          echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "EVENT_TYPE=${{ github.event_name }}" >> $GITHUB_ENV
+          echo "ACTOR=${{ github.actor }}" >> $GITHUB_ENV
+          echo "COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')" >> $GITHUB_ENV
+          echo "REPO=${{ github.repository }}" >> $GITHUB_ENV
+          echo "BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+          echo "COMMIT_MSG=$(git log -1 --pretty=%B | head -n 1)" >> $GITHUB_ENV
+          echo "TIMESTAMP=$(date -u "+%A, %B %d %Y, %I:%M:%S %p UTC")" >> $GITHUB_ENV
+          echo "GITHUB_RUN_URL=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_ENV
+
+      - name: Get Changed Files and Stats
+        id: changed_files
+        run: |
+          CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD | awk '{print "- " $0}' | tr '\n' '\\n')
+          FILE_COUNT=$(echo "$CHANGED_FILES" | grep -o '\\n' | wc -l)
+          FILE_COUNT=$((FILE_COUNT+1)) # Adjust for single-file cases
+          echo "CHANGED_FILES=${CHANGED_FILES}" >> $GITHUB_ENV
+          echo "FILE_COUNT=$FILE_COUNT" >> $GITHUB_ENV
+
+      - name: Send GitHub Event Notification to Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_MASTER_URL }}
+        run: |
+          JSON_PAYLOAD=$(jq -n --arg deploy "$DEPLOY_NUMBER" \
+            --arg run_url "$GITHUB_RUN_URL" \
+            --arg commit_hash "$COMMIT_HASH" \
+            --arg actor "$ACTOR" \
+            --arg commit_author "$COMMIT_AUTHOR" \
+            --arg event_type "$EVENT_TYPE" \
+            --arg repo "$REPO" \
+            --arg branch "$BRANCH" \
+            --arg commit_msg "$COMMIT_MSG" \
+            --arg timestamp "$TIMESTAMP" \
+            --arg changed_files "$CHANGED_FILES" \
+            --arg file_count "$FILE_COUNT" \
+            '{
+              "username": "GitHub Bot",
+              "avatar_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+              "embeds": [{
+                "title": "🚀 New Deployment in Branch: \($branch)",
+                "url": $run_url,
+                "color": 3066993,
+                "fields": [
+                  { "name": "📦 Deploy", "value": $deploy, "inline": true },
+                  { "name": "🔄 Commit", "value": "[\($commit_hash)](https://github.com/\($repo)/commit/\($commit_hash))", "inline": true },
+                  { "name": "👤 Triggered by", "value": $actor, "inline": true },
+                  { "name": "📅 Timestamp", "value": $timestamp, "inline": true },
+                  { "name": "📢 Event Type", "value": $event_type, "inline": true },
+                  { "name": "📂 Repository", "value": "[\($repo)](https://github.com/\($repo))", "inline": true },
+                  { "name": "💬 Commit Message", "value": $commit_msg, "inline": false },
+                  { "name": "📑 Files Changed (\($file_count))", "value": $changed_files, "inline": false }
+                ],
+                "footer": { "text": "Status: IN_PROGRESS" }
+              }]
+            }')
+
+          curl -H "Content-Type: application/json" -X POST -d "$JSON_PAYLOAD" "$DISCORD_WEBHOOK_URL"
