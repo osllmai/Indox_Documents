@@ -63,6 +63,8 @@ jobs:
               "username": "GitHub Bot",
               "avatar_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
               "embeds": [{
+                "title": "🚀 Release \($version)",
+                "description": "We are so excited to announce the latest release of our project! This update includes key improvements and enhancements to make our system even better.\n\n",
                 "fields": [
                   { "name": "📅 Timestamp", "value": $timestamp, "inline": false },
                   { "name": "📂 Repository", "value": "[\($repo)](https://github.com/\($repo))", "inline": false },
