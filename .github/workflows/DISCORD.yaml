@@ -31,16 +31,19 @@ jobs:
       - name: Load README.md Content
         id: load_markdown
         run: |
-          # Fetch README.md content (limit to 1500 chars to avoid Discord limits)
-          MARKDOWN_CONTENT=$(curl -sL https://raw.githubusercontent.com/osllmai/Indox_Documents/master/README.md | head -c 1500)
+          # Read local README.md and limit to 1500 characters
+          MARKDOWN_CONTENT=$(cat README.md | head -c 1500)
 
-          # Ensure content is not empty (fallback)
+          # Fallback if empty
           if [ -z "$MARKDOWN_CONTENT" ]; then
             MARKDOWN_CONTENT="README.md could not be loaded."
           fi
 
-          # Store in environment (ensure safe JSON formatting)
-          echo "MARKDOWN_CONTENT=$(echo "$MARKDOWN_CONTENT" | jq -Rs .)" >> $GITHUB_ENV
+          # Store with heredoc to handle newlines
+          delimiter=$(openssl rand -hex 6)
+          echo "MARKDOWN_CONTENT<<${delimiter}" >> $GITHUB_ENV
+          echo "$MARKDOWN_CONTENT" >> $GITHUB_ENV
+          echo "${delimiter}" >> $GITHUB_ENV
 
       - name: Create and Push Git Tag
         env:
