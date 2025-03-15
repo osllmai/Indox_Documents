@@ -18,10 +18,14 @@ jobs:
       - name: Gather Deployment Information
         id: gather_info
         run: |
-          echo "TIMESTAMP=$(date -u \"+%A, %B %d %Y, %I:%M:%S %p UTC\")" >> $GITHUB_ENV
+          TIMESTAMP=$(date -u "+%A, %B %d %Y, %I:%M:%S %p UTC")
+          TAG_NAME=v$(date +'%Y%m%d-%H%M%S')
+          VERSION_NAME=$(date +'%Y.%m.%d')
+          echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
           echo "REPO=${{ github.repository }}" >> $GITHUB_ENV
           echo "MARKDOWN_URL=https://github.com/osllmai/Indox_Documents/blob/master/new_files/README.md" >> $GITHUB_ENV
-          echo "TAG_NAME=v$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
 
       - name: Create and Push Git Tag
         env:
@@ -32,6 +36,12 @@ jobs:
           git tag $TAG_NAME
           git push origin $TAG_NAME
 
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create $TAG_NAME --title "Release $VERSION_NAME" --notes "Automated release generated on $TIMESTAMP."
+
       - name: Send GitHub Event Notification to Discord
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_MASTER_URL }}
@@ -41,6 +51,7 @@ jobs:
             --arg repo "$REPO" \
             --arg markdown_url "$MARKDOWN_URL" \
             --arg tag "$TAG_NAME" \
+            --arg version "$VERSION_NAME" \
             '{
               "username": "GitHub Bot",
               "avatar_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
@@ -49,7 +60,8 @@ jobs:
                   { "name": "📅 Timestamp", "value": $timestamp, "inline": false },
                   { "name": "📂 Repository", "value": "[\($repo)](https://github.com/\($repo))", "inline": false },
                   { "name": "📜 Markdown Documentation", "value": "[Click here](\($markdown_url))", "inline": false },
-                  { "name": "🏷️ Tag", "value": "\($tag)", "inline": false }
+                  { "name": "🏷️ Tag", "value": "\($tag) - \($timestamp)", "inline": false },
+                  { "name": "🚀 Version", "value": "Release \($version)", "inline": false }
                 ]
               }]
             }')
