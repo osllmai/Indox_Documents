@@ -27,6 +27,14 @@ jobs:
           echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
 
+      - name: Load Markdown Content
+        id: load_markdown
+        run: |
+          MARKDOWN_CONTENT=$(curl -sL https://raw.githubusercontent.com/osllmai/Indox_Documents/master/new_files/README.md | head -c 1500)
+          echo "MARKDOWN_CONTENT<<EOF" >> $GITHUB_ENV
+          echo "$MARKDOWN_CONTENT" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
       - name: Create and Push Git Tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -52,16 +60,17 @@ jobs:
             --arg markdown_url "$MARKDOWN_URL" \
             --arg tag "$TAG_NAME" \
             --arg version "$VERSION_NAME" \
+            --arg markdown_content "$MARKDOWN_CONTENT" \
             '{
               "username": "GitHub Bot",
               "avatar_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
               "embeds": [{
                 "fields": [
-                  { "name": "📅 Timestamp", "value": $timestamp, "inline": false },
+                  { "name": "🚀 Version", "value": "Release \($version)", "inline": false },
+                  { "name": "📅 When", "value": $timestamp, "inline": false },
                   { "name": "📂 Repository", "value": "[\($repo)](https://github.com/\($repo))", "inline": false },
-                  { "name": "📜 Markdown Documentation", "value": "[Click here](\($markdown_url))", "inline": false },
+                  { "name": "📜 Markdown Documentation", "value": "[Click here](\($markdown_url))\n\n\(Markdown Preview:\n```\n\($markdown_content)\n```", "inline": false },
                   { "name": "🏷️ Tag", "value": "\($tag) - \($timestamp)", "inline": false },
-                  { "name": "🚀 Version", "value": "Release \($version)", "inline": false }
                 ]
               }]
             }')
