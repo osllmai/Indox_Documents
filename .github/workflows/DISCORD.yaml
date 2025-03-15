@@ -66,11 +66,11 @@ jobs:
               "avatar_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
               "embeds": [{
                 "fields": [
-                  { "name": "🚀 Version", "value": "Release \($version)", "inline": false },
-                  { "name": "📅 When", "value": $timestamp, "inline": false },
+                  { "name": "📅 Timestamp", "value": $timestamp, "inline": false },
                   { "name": "📂 Repository", "value": "[\($repo)](https://github.com/\($repo))", "inline": false },
                   { "name": "📜 Markdown Documentation", "value": "[Click here](\($markdown_url))\n\n\(Markdown Preview:\n```\n\($markdown_content)\n```", "inline": false },
                   { "name": "🏷️ Tag", "value": "\($tag) - \($timestamp)", "inline": false },
+                  { "name": "🚀 Version", "value": "Release \($version)", "inline": false }
                 ]
               }]
             }')
