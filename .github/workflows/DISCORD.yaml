@@ -19,8 +19,9 @@ jobs:
         id: gather_info
         run: |
           TIMESTAMP=$(date -u "+%A, %B %d %Y, %I:%M:%S %p UTC")
-          TAG_NAME=v$(date +'%Y%m%d-%H%M%S')
-          VERSION_NAME=$(date +'%Y.%m.%d')
+          TAG_NAME="v$(date +'%Y%m%d-%H%M%S')"
+          VERSION_NAME="$(date +'%Y.%m.%d')"
+          
           echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
           echo "REPO=${{ github.repository }}" >> $GITHUB_ENV
           echo "MARKDOWN_URL=https://github.com/osllmai/Indox_Documents/blob/master/new_files/README.md" >> $GITHUB_ENV
@@ -46,7 +47,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create $TAG_NAME --title "Release $VERSION_NAME" --notes "Automated release generated on $TIMESTAMP."
+          gh release create $TAG_NAME \
+            --title "Release $VERSION_NAME" \
+            --notes "Automated release generated on $TIMESTAMP."
 
       - name: Send GitHub Event Notification to Discord
         env:
@@ -68,22 +71,47 @@ jobs:
             --arg markdown_url "$MARKDOWN_URL" \
             --arg tag "$TAG_NAME" \
             --arg version "$VERSION_NAME" \
-            --arg markdown_content "$MARKDOWN_CONTENT" \
+            --arg markdown_content "$(echo "$MARKDOWN_CONTENT" | jq -Rs .)" \
             '{
               "username": "GitHub Bot",
               "avatar_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
-              "embeds": [{
-                "title": "🚀 Release \($version)",
-                "description": "We are so excited to announce the latest release of our project! This update includes key improvements and enhancements to make our system even better.",
-                "fields": [
-                  { "name": "📅 Timestamp", "value": $timestamp, "inline": false },
-                  { "name": "📂 Repository", "value": "[\($repo)](https://github.com/\($repo))", "inline": false },
-                  { "name": "🏷️ Tag", "value": "\($tag) - \($timestamp)", "inline": false },
-                  { "name": "🚀 Version", "value": "Release \($version)", "inline": false }
-                ]
-              }]
+              "embeds": [
+                {
+                  "title": "🚀 Release \($version)",
+                  "description": "We are excited to announce the latest release of our project! This update includes key improvements and enhancements to make our system even better.",
+                  "fields": [
+                    {
+                      "name": "📅 Timestamp",
+                      "value": $timestamp,
+                      "inline": false
+                    },
+                    {
+                      "name": "📂 Repository",
+                      "value": "[\($repo)](https://github.com/\($repo))",
+                      "inline": false
+                    },
+                    {
+                      "name": "📜 Markdown Documentation",
+                      "value": "[Click here](\($markdown_url))\n\nMarkdown Preview:\n```\n\($markdown_content)\n```",
+                      "inline": false
+                    },
+                    {
+                      "name": "🏷️ Tag",
+                      "value": "\($tag) - \($timestamp)",
+                      "inline": false
+                    },
+                    {
+                      "name": "🚀 Version",
+                      "value": "Release \($version)",
+                      "inline": false
+                    }
+                  ]
+                }
+              ]
             }')
 
-          echo "Final JSON Payload: $JSON_PAYLOAD"
+          # Validate JSON formatting before sending
+          echo "$JSON_PAYLOAD" | jq .
 
+          # Send to Discord webhook
           curl -H "Content-Type: application/json" -X POST -d "$JSON_PAYLOAD" "$DISCORD_WEBHOOK_URL"
