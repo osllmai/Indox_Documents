@@ -78,7 +78,6 @@ jobs:
                 "fields": [
                   { "name": "📅 Timestamp", "value": $timestamp, "inline": false },
                   { "name": "📂 Repository", "value": "[\($repo)](https://github.com/\($repo))", "inline": false },
-                  { "name": "📜 Markdown Documentation", "value": "[Click here](\($markdown_url))\n\nMarkdown Preview:\n```\n\($markdown_content)\n```", "inline": false },
                   { "name": "🏷️ Tag", "value": "\($tag) - \($timestamp)", "inline": false },
                   { "name": "🚀 Version", "value": "Release \($version)", "inline": false }
                 ]
