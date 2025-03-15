@@ -24,14 +24,14 @@ jobs:
           
           echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
           echo "REPO=${{ github.repository }}" >> $GITHUB_ENV
-          echo "MARKDOWN_URL=https://github.com/osllmai/Indox_Documents/blob/master/new_files/README.md" >> $GITHUB_ENV
+          echo "MARKDOWN_URL=https://github.com/osllmai/Indox_Documents/blob/master/README.md" >> $GITHUB_ENV
           echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
 
-      - name: Load Markdown Content
+      - name: Load README.md Content
         id: load_markdown
         run: |
-          MARKDOWN_CONTENT=$(curl -sL https://raw.githubusercontent.com/osllmai/Indox_Documents/master/new_files/README.md | head -c 1000 | jq -Rs .)
+          MARKDOWN_CONTENT=$(curl -sL https://raw.githubusercontent.com/osllmai/Indox_Documents/master/README.md | head -c 1500 | jq -Rs .)
           echo "MARKDOWN_CONTENT=$MARKDOWN_CONTENT" >> $GITHUB_ENV
 
       - name: Create and Push Git Tag
@@ -78,7 +78,7 @@ jobs:
               "embeds": [
                 {
                   "title": "🚀 Release \($version)",
-                  "description": "We are excited to announce the latest release of our project! This update includes key improvements and enhancements to make our system even better.",
+                  "description": "We are excited to announce the latest release of our project! This update includes key improvements and enhancements.",
                   "fields": [
                     {
                       "name": "📅 Timestamp",
@@ -90,7 +90,11 @@ jobs:
                       "value": "[\($repo)](https://github.com/\($repo))",
                       "inline": false
                     },
-                    
+                    {
+                      "name": "📜 Markdown Documentation",
+                      "value": "[Click here](\($markdown_url))\n\nMarkdown Preview:\n```\n\($markdown_content)\n```",
+                      "inline": false
+                    },
                     {
                       "name": "🏷️ Tag",
                       "value": "\($tag) - \($timestamp)",
