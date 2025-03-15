@@ -1,0 +1,55 @@
+name: GitHub to Discord Notification (Master)
+
+on:
+  push:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  notify_discord:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          clean: false
+
+      - name: Gather Deployment Information
+        id: gather_info
+        run: |
+          echo "TIMESTAMP=$(date -u "+%A, %B %d %Y, %I:%M:%S %p UTC")" >> $GITHUB_ENV
+          echo "REPO=${{ github.repository }}" >> $GITHUB_ENV
+          echo "MARKDOWN_URL=https://github.com/osllmai/Indox_Documents/blob/master/new_files/README.md" >> $GITHUB_ENV
+
+      - name: Load Markdown Content
+        id: load_markdown
+        run: |
+          MARKDOWN_CONTENT=$(curl -sL https://raw.githubusercontent.com/osllmai/Indox_Documents/master/new_files/README.md | head -c 2000)
+          echo "MARKDOWN_CONTENT<<EOF" >> $GITHUB_ENV
+          echo "$MARKDOWN_CONTENT" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Send GitHub Event Notification to Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_MASTER_URL }}
+        run: |
+          JSON_PAYLOAD=$(jq -n \
+            --arg timestamp "$TIMESTAMP" \
+            --arg repo "$REPO" \
+            --arg markdown_url "$MARKDOWN_URL" \
+            --arg markdown_content "$MARKDOWN_CONTENT" \
+            '{
+              "username": "GitHub Bot",
+              "avatar_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+              "embeds": [{
+                "fields": [
+                  { "name": "📅 Timestamp", "value": $timestamp, "inline": false },
+                  { "name": "📂 Repository", "value": "[\($repo)](https://github.com/\($repo))", "inline": false },
+                  { "name": "📜 Markdown Documentation", "value": "[Click here](\($markdown_url))", "inline": false },
+                  { "name": "📖 Markdown Content (Preview)", "value": $markdown_content, "inline": false }
+                ]
+              }]
+            }')
+
+          curl -H "Content-Type: application/json" -X POST -d "$JSON_PAYLOAD" "$DISCORD_WEBHOOK_URL"
