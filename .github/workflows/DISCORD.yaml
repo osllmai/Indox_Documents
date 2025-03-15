@@ -1,10 +1,66 @@
+name: GitHub to Discord Notification (Master)
+
+on:
+  push:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  notify_discord:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          clean: false
+
+      - name: Gather Deployment Information
+        id: gather_info
+        run: |
+          TIMESTAMP=$(date -u "+%A, %B %d %Y, %I:%M:%S %p UTC")
+          TAG_NAME=v$(date +'%Y%m%d-%H%M%S')
+          VERSION_NAME=$(date +'%Y.%m.%d')
+          echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
+          echo "REPO=${{ github.repository }}" >> $GITHUB_ENV
+          echo "MARKDOWN_URL=https://github.com/osllmai/Indox_Documents/blob/master/new_files/README.md" >> $GITHUB_ENV
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+
+      - name: Load Markdown Content
+        id: load_markdown
+        run: |
+          MARKDOWN_CONTENT=$(curl -sL https://raw.githubusercontent.com/osllmai/Indox_Documents/master/new_files/README.md | head -c 1000 | jq -Rs .)
+          echo "MARKDOWN_CONTENT=$MARKDOWN_CONTENT" >> $GITHUB_ENV
+
+      - name: Create and Push Git Tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create $TAG_NAME --title "Release $VERSION_NAME" --notes "Automated release generated on $TIMESTAMP."
+
       - name: Send GitHub Event Notification to Discord
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_MASTER_URL }}
         run: |
           set -x  # Enable debugging
-          
-          SHORT_MARKDOWN_CONTENT=$(echo "$MARKDOWN_CONTENT" | head -c 1000)
+          echo "Sending the following payload to Discord:"
+          echo "TIMESTAMP: $TIMESTAMP"
+          echo "REPO: $REPO"
+          echo "TAG_NAME: $TAG_NAME"
+          echo "VERSION_NAME: $VERSION_NAME"
+          echo "MARKDOWN_URL: $MARKDOWN_URL"
+          echo "MARKDOWN_CONTENT (preview):"
+          echo "$MARKDOWN_CONTENT"
 
           JSON_PAYLOAD=$(jq -n \
             --arg timestamp "$TIMESTAMP" \
@@ -12,13 +68,13 @@
             --arg markdown_url "$MARKDOWN_URL" \
             --arg tag "$TAG_NAME" \
             --arg version "$VERSION_NAME" \
-            --arg markdown_content "$SHORT_MARKDOWN_CONTENT" \
+            --arg markdown_content "$MARKDOWN_CONTENT" \
             '{
               "username": "GitHub Bot",
               "avatar_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
               "embeds": [{
                 "title": "🚀 Release \($version)",
-                "description": "We are so excited to announce the latest release of our project! This update includes key improvements and enhancements to make our system even better.\n\n",
+                "description": "We are so excited to announce the latest release of our project! This update includes key improvements and enhancements to make our system even better.",
                 "fields": [
                   { "name": "📅 Timestamp", "value": $timestamp, "inline": false },
                   { "name": "📂 Repository", "value": "[\($repo)](https://github.com/\($repo))", "inline": false },
@@ -29,6 +85,6 @@
               }]
             }')
 
-          echo "JSON Payload: $JSON_PAYLOAD"  # Debug output
+          echo "Final JSON Payload: $JSON_PAYLOAD"
 
           curl -H "Content-Type: application/json" -X POST -d "$JSON_PAYLOAD" "$DISCORD_WEBHOOK_URL"
