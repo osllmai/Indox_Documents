@@ -37,9 +37,12 @@ jobs:
           # Remove Markdown formatting (e.g., #, **, etc.)
           PLAIN_TEXT=$(echo "$MARKDOWN_CONTENT" | sed -e 's/#//g' -e 's/\*\*//g' -e 's/`//g')
 
+          # Add "Continue reading" link at the end
+          PLAIN_TEXT="$PLAIN_TEXT\n\nTo continue reading, please visit: https://github.com/osllmai/Indox_Documents"
+
           # Fallback if empty
           if [ -z "$PLAIN_TEXT" ]; then
-            PLAIN_TEXT="README.md could not be loaded."
+            PLAIN_TEXT="README.md could not be loaded. To view the documentation, please visit: https://github.com/osllmai/Indox_Documents"
           fi
 
           # Store with heredoc to handle newlines
