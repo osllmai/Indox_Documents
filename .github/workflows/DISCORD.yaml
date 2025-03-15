@@ -31,8 +31,8 @@ jobs:
       - name: Load README.md Content
         id: load_markdown
         run: |
-          # Read local README.md and limit to 1500 characters
-          MARKDOWN_CONTENT=$(cat README.md | head -c 1500)
+          # Read local README.md and limit to 800 characters
+          MARKDOWN_CONTENT=$(cat README.md | head -c 800)
 
           # Remove Markdown formatting (e.g., #, **, etc.)
           PLAIN_TEXT=$(echo "$MARKDOWN_CONTENT" | sed -e 's/#//g' -e 's/\*\*//g' -e 's/`//g')
