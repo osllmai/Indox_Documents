@@ -1,14 +1,77 @@
+name: GitHub to Discord Notification (Master)
+
+on:
+  push:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  notify_discord:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          clean: false
+
+      - name: Gather Deployment Information
+        id: gather_info
+        run: |
+          TIMESTAMP=$(date -u "+%A, %B %d %Y, %I:%M:%S %p UTC")
+          TAG_NAME="v$(date +'%Y%m%d-%H%M%S')"
+          VERSION_NAME="$(date +'%Y.%m.%d')"
+          
+          echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
+          echo "REPO=${{ github.repository }}" >> $GITHUB_ENV
+          echo "MARKDOWN_URL=https://github.com/osllmai/Indox_Documents/blob/master/README.md" >> $GITHUB_ENV
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+
       - name: Load README.md Content
         id: load_markdown
         run: |
-          curl -sL https://raw.githubusercontent.com/osllmai/Indox_Documents/master/README.md | head -c 1500 > markdown_content.txt
-          echo "MARKDOWN_CONTENT=$(jq -Rs . < markdown_content.txt)" >> $GITHUB_ENV
+          # Fetch README.md content (limit to 1500 chars to avoid Discord limits)
+          MARKDOWN_CONTENT=$(curl -sL https://raw.githubusercontent.com/osllmai/Indox_Documents/master/README.md | head -c 1500)
+
+          # Ensure content is not empty (fallback)
+          if [ -z "$MARKDOWN_CONTENT" ]; then
+            MARKDOWN_CONTENT="README.md could not be loaded."
+          fi
+
+          # Store in environment (ensure safe JSON formatting)
+          echo "MARKDOWN_CONTENT=$(echo "$MARKDOWN_CONTENT" | jq -Rs .)" >> $GITHUB_ENV
+
+      - name: Create and Push Git Tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create $TAG_NAME \
+            --title "Release $VERSION_NAME" \
+            --notes "Automated release generated on $TIMESTAMP."
 
       - name: Send GitHub Event Notification to Discord
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_MASTER_URL }}
         run: |
-          MARKDOWN_CONTENT=$(jq -Rs . < markdown_content.txt)
+          set -x  # Enable debugging
+          echo "Sending the following payload to Discord:"
+          echo "TIMESTAMP: $TIMESTAMP"
+          echo "REPO: $REPO"
+          echo "TAG_NAME: $TAG_NAME"
+          echo "VERSION_NAME: $VERSION_NAME"
+          echo "MARKDOWN_URL: $MARKDOWN_URL"
+          echo "MARKDOWN_CONTENT (preview):"
+          echo "$MARKDOWN_CONTENT"
 
           JSON_PAYLOAD=$(jq -n \
             --arg timestamp "$TIMESTAMP" \
@@ -23,17 +86,40 @@
               "embeds": [
                 {
                   "title": "🚀 Release \($version)",
-                  "description": "We are excited to announce the latest release of our project!",
+                  "description": "We are excited to announce the latest release of our project! This update includes key improvements and enhancements.",
                   "fields": [
                     {
+                      "name": "📅 Timestamp",
+                      "value": $timestamp,
+                      "inline": false
+                    },
+                    {
+                      "name": "📂 Repository",
+                      "value": "[\($repo)](https://github.com/\($repo))",
+                      "inline": false
+                    },
+                    {
                       "name": "📜 Markdown Documentation",
-                      "value": "[Click here](\($markdown_url))\n\nMarkdown Preview:\n```\n\($markdown_content)\n```",
+                      "value": "[Click here](\($markdown_url))\n\n```\n\($markdown_content)\n```",
+                      "inline": false
+                    },
+                    {
+                      "name": "🏷️ Tag",
+                      "value": "\($tag) - \($timestamp)",
+                      "inline": false
+                    },
+                    {
+                      "name": "🚀 Version",
+                      "value": "Release \($version)",
                       "inline": false
                     }
                   ]
                 }
               ]
             }')
+
+          # Validate JSON formatting before sending
+          echo "$JSON_PAYLOAD" | jq .
 
           # Send to Discord webhook
           curl -H "Content-Type: application/json" -X POST -d "$JSON_PAYLOAD" "$DISCORD_WEBHOOK_URL"
