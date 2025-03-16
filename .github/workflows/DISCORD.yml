@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       NEW_TAG: ${{ steps.versioning.outputs.NEW_TAG }}
-      PLAIN_TEXT: ${{ steps.load_markdown.outputs.PLAIN_TEXT }}  # Pass Markdown content
+      PLAIN_TEXT: ${{ steps.load_markdown.outputs.PLAIN_TEXT }}
     steps:
 
       - name: Checkout Repository
@@ -50,10 +50,10 @@ jobs:
         id: load_markdown
         run: |
           if [[ -f README.md ]]; then
-            MARKDOWN_CONTENT=$(head -c 800 README.md | sed -e 's/#//g' -e 's/\*\*//g' -e 's/`//g')
-            PLAIN_TEXT="$MARKDOWN_CONTENT\n\nTo continue reading, visit: https://github.com/${{ github.repository }}/blob/master/README.md"
+            MARKDOWN_CONTENT=$(head -c 800 README.md)
+            PLAIN_TEXT="$MARKDOWN_CONTENT\n\n**[Continue Reading](https://github.com/${{ github.repository }}/blob/master/README.md)**"
           else
-            PLAIN_TEXT="README.md could not be loaded. To view documentation, visit: https://github.com/${{ github.repository }}"
+            PLAIN_TEXT="README.md could not be loaded. [Click here to view documentation](https://github.com/${{ github.repository }})"
           fi
 
           delimiter=$(openssl rand -hex 6)
@@ -77,7 +77,7 @@ jobs:
         run: |
           echo "Sending Discord notification for tag: $NEW_TAG"  # Debugging step
 
-          JSON_PAYLOAD=$(jq -n --rawfile markdown_text <(echo "$PLAIN_TEXT") \
+          JSON_PAYLOAD=$(jq -n --argfile markdown_text <(echo "$PLAIN_TEXT") \
             --arg timestamp "$TIMESTAMP" \
             --arg repo "$REPO" \
             --arg tag "$NEW_TAG" \
