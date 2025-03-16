@@ -121,8 +121,8 @@ jobs:
           echo "🔍 DEBUG: Sending message to Telegram..."
           TELEGRAM_URL="https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"
 
-          # Escape special characters for MarkdownV2 in Telegram
-          ESCAPED_README_PREVIEW=$(echo "$README_PREVIEW" | sed -E 's/([_\*\[\]\(\)~`>#\+\-=|{}.!])/\\\1/g')
+          # Properly escape MarkdownV2 special characters for Telegram
+          ESCAPED_README_PREVIEW=$(echo "$README_PREVIEW" | sed -E 's/([]_*\[\]()~`>#\+\-=|{}.!])/\\\1/g')
 
           # Format message for Telegram
           TELEGRAM_MESSAGE="🚀 *New Release: $NEW_TAG*\n\n\
@@ -139,3 +139,4 @@ jobs:
             --data-urlencode "parse_mode=MarkdownV2")
 
           echo "✅ Telegram Response: $RESPONSE"
+
