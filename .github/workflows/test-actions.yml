@@ -82,8 +82,12 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          # local-dir: indoxDocs/classic/build/  # Uploads only the built docs
-          server-dir: docs.osllm.ai/public_html/  # Change this to match the correct folder
+          local-dir: indoxDocs/classic/build/  # Change from 'build/' to 'build/*'
+          server-dir: docs.osllm.ai/public_html/  # Upload directly to public_html
+          exclude: |
+            **/.git*
+            **/.github*
+            **/node_modules/*
 
          
 
