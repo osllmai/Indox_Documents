@@ -29,15 +29,27 @@ jobs:
           npm install
           echo "✅ npm install completed."
 
+      - name: ✅ Verify `versions.json` Exists
+        run: |
+          cd indoxDocs/classic
+          if [ -f versions.json ]; then
+            echo "📜 Found versions.json, forcing all versions to be built."
+            cat versions.json
+          else
+            echo "❌ versions.json missing! Creating it now..."
+            echo '["0.0.1", "0.1", "0.1.1"]' > versions.json
+            echo "✅ versions.json created."
+          fi
+
       - name: ✅ Force Rebuild All Versions
         run: |
           cd indoxDocs/classic
           echo "🧹 Clearing old cache to ensure all versions build..."
           npm run docusaurus clear
           
-          echo "📦 Running npm run build to regenerate all versions..."
-          npm run build
-          echo "✅ Full rebuild completed."
+          echo "📦 Running full Docusaurus build..."
+          npm run build -- --out-dir build
+          echo "✅ Full rebuild completed with all versions."
 
       - name: ✅ Verify Build Output
         run: |
