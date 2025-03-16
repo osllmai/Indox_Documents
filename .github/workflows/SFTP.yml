@@ -1,0 +1,3 @@
+- name: 🚀 Upload via SFTP
+  run: |
+    lftp -e "set sftp:auto-confirm yes; open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} sftp://${{ secrets.FTP_SERVER }}; mirror -R indoxDocs/classic/build/ /docs.osllm.ai/public_html/; bye"
