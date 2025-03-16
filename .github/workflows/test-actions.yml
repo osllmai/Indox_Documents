@@ -40,7 +40,13 @@ jobs:
           echo "📜 Existing versions.json content:"
           cat versions.json
           echo "🔄 Listing all versions available:"
-          jq -r '.[]' versions.json
+          jq -r '.[]' versions.json || echo "⚠️ Unable to parse versions.json"
+
+      - name: ✅ Check & Debug `docusaurus.config.js`
+        run: |
+          cd indoxDocs/classic
+          echo "🔍 Checking for versioning support in docusaurus.config.js..."
+          grep "versions" docusaurus.config.js || echo "⚠️ Warning: No versioning found in docusaurus.config.js"
 
       - name: ✅ Force Full Docusaurus Rebuild (Clear Cache)
         run: |
@@ -49,17 +55,18 @@ jobs:
           rm -rf build .docusaurus
           echo "✅ Cache cleared."
 
-      - name: ✅ Build All Versions of Documentation
+      - name: 🚀 Build All Versions of Documentation
         run: |
           cd indoxDocs/classic
           echo "📦 Running full Docusaurus build..."
+          npm run docusaurus clear
           npm run build
           echo "✅ Full rebuild completed."
 
-      - name: ✅ Verify Built Versions
+      - name: ✅ Verify Built Versions Before FTP Upload
         run: |
           cd indoxDocs/classic/build
-          echo "📂 Checking all generated versions..."
+          echo "📂 Checking all built versions..."
           ls -laR
           echo "🔍 Detecting versions from build directory:"
           ls -d */ | sed 's#/##'
