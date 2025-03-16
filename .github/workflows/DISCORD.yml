@@ -70,7 +70,7 @@ jobs:
           echo "🔍 Creating and pushing Git tag..."
           git config --global user.name "GitHub Actions"
           git config --global user.email "github-actions@github.com"
-          git tag -a "$NEW_TAG" -m "Release $NEW_TAG"
+          git tag -a "$NEW_TAG" -m "$NEW_TAG"
           git push origin "$NEW_TAG"
           echo "✅ Tag $NEW_TAG created and pushed."
 
@@ -79,8 +79,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "🚀 Creating GitHub release..."
-          gh release create "$NEW_TAG" --title "Release $NEW_TAG" --notes "Automated release for version $NEW_TAG."
-          echo "✅ Release $NEW_TAG created."
+          gh release create "$NEW_TAG" --title "$NEW_TAG" --notes "Automated release for version $NEW_TAG."
+          echo "✅ $NEW_TAG created."
 
       - name: Prepare Message
         id: prepare_message
