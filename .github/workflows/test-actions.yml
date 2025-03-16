@@ -18,35 +18,44 @@ jobs:
       - name: ✅ Checkout Repository
         uses: actions/checkout@v3
         with:
-          ref: master
+          ref: master  # Ensures master branch is used
 
       - name: ✅ Install Dependencies
         run: |
           cd indoxDocs/classic
+          echo "📦 Running npm install..."
           npm install
+          echo "✅ npm install completed."
 
-      - name: ✅ Ensure `versions.json` Exists
+      - name: 🔄 Run Docusaurus Build to Generate Versions
         run: |
           cd indoxDocs/classic
-          if [ ! -f versions.json ]; then
-            echo '["0.0.1", "0.1", "0.1.1"]' > versions.json
-          fi
-          cat versions.json
-
-      - name: ✅ Force Rebuild All Versions
-        run: |
-          cd indoxDocs/classic
-          npm run docusaurus clear
+          echo "🚀 Running build to generate versions.json..."
           npm run build -- --out-dir build
+          echo "✅ Build completed."
+
+      - name: ✅ Verify `versions.json` Exists After Build
+        run: |
+          cd indoxDocs/classic
+          if [ -f versions.json ]; then
+            echo "📜 versions.json found!"
+            cat versions.json
+          else
+            echo "❌ ERROR: versions.json not found after build!"
+            exit 1  # Fail the workflow if the file is missing
+          fi
 
       - name: ✅ Verify Build Output
-        run: ls -la indoxDocs/classic/build/
-
-      - name: 🚀 Clean FTP Directory Before Upload
         run: |
-          curl -u ${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }} \
-               ftp://${{ secrets.FTP_SERVER }}/docs.osllm.ai/public_html/ \
-               -Q "DELE *"
+          echo "📂 Checking all generated files..."
+          find indoxDocs/classic/build/ -type d -print  # Show all built folders
+          ls -la indoxDocs/classic/build/  # List main directory contents
+          if [ -d "indoxDocs/classic/build/" ]; then
+            echo "✅ Build directory exists!"
+          else
+            echo "❌ Build directory missing!"
+            exit 1
+          fi
 
       - name: ✅ Upload to FTP Server (Force Overwrite)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
@@ -60,6 +69,25 @@ jobs:
             **/.git*
             **/.github*
             **/node_modules/*
-          force: true  # Forces overwriting existing files
-          log-level: verbose  # Shows detailed upload logs
+          force: true  # Ensures all files are overwritten
+          log-level: verbose  # Detailed logs for debugging
 
+      - name: 🚨 Capture Logs if Failure Occurs
+        if: ${{ failure() }}
+        run: |
+          echo "🚨 ERROR DETECTED!"
+          echo "📜 npm Install Log:"
+          cat indoxDocs/classic/npm_install.log || echo "⚠️ No npm install log found."
+
+          echo "📜 Build Docs Log:"
+          cat indoxDocs/classic/build_docs.log || echo "⚠️ No build-docs log found."
+
+          echo "📂 Checking Final Build Directory Contents:"
+          if [ -d "indoxDocs/classic/build/" ]; then
+            echo "✅ Build directory exists!"
+            ls -la indoxDocs/classic/build/
+          else
+            echo "❌ Build directory is missing!"
+          fi
+
+          echo "🚨 Deployment failed! Check logs above for details."
