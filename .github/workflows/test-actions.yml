@@ -76,7 +76,12 @@ jobs:
           echo "📂 Contents of build directory before FTP upload:"
           ls -laR indoxDocs/classic/build/
 
-      - name: ✅ Upload to FTP Server
+      - name: 🚨 Clean Up Existing Files on Server
+        run: |
+          echo "🚨 Connecting to FTP server and deleting all files before uploading..."
+          lftp -e "set ftp:ssl-allow no; open ${{ secrets.FTP_SERVER }} -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }}; mirror -R --delete-empty-dirs --verbose --remove-first docs.osllm.ai/public_html/; bye"
+
+      - name: ✅ Upload New Build to FTP Server
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
