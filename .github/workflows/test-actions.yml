@@ -29,23 +29,18 @@ jobs:
           npm install
           echo "✅ npm install completed."
 
-      - name: ✅ Verify & Update `versions.json`
+      - name: ✅ Ensure `versions.json` Exists & List Versions
         run: |
           cd indoxDocs/classic
-          if [ -f versions.json ]; then
-            echo "📜 Found existing versions.json. Content:"
-            cat versions.json
-          else
+          if [ ! -f versions.json ]; then
             echo "❌ versions.json missing! Creating it now..."
-            echo '["0.0.1", "0.1", "0.1.1"]' > versions.json
+            echo '[]' > versions.json
             echo "✅ versions.json created."
           fi
-
-      - name: ✅ Debug `versions.json` Before Build
-        run: |
-          cd indoxDocs/classic
-          echo "📜 Checking versions.json before build:"
+          echo "📜 Existing versions.json content:"
           cat versions.json
+          echo "🔄 Listing all versions available:"
+          jq -r '.[]' versions.json
 
       - name: ✅ Force Full Docusaurus Rebuild (Clear Cache)
         run: |
@@ -61,17 +56,13 @@ jobs:
           npm run build
           echo "✅ Full rebuild completed."
 
-      - name: ✅ Verify Build Output
+      - name: ✅ Verify Built Versions
         run: |
           cd indoxDocs/classic/build
           echo "📂 Checking all generated versions..."
           ls -laR
-          if [ -d "indoxDocs/classic/build" ]; then
-            echo "✅ Build directory exists!"
-          else
-            echo "❌ Build directory missing!"
-            exit 1
-          fi
+          echo "🔍 Detecting versions from build directory:"
+          ls -d */ | sed 's#/##'
 
       - name: ✅ List Built Versions Before FTP Upload
         run: |
