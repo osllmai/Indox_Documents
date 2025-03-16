@@ -32,3 +32,24 @@ jobs:
             echo "❌ npm install failed!"
             exit 1
           fi
+
+      - name: ✅ Build Documentation
+        run: |
+          cd indoxDocs/classic
+          echo "📦 Running npm run build..."
+          if npm run build; then
+            echo "✅ Build completed successfully."
+          else
+            echo "❌ Build failed!"
+            exit 1
+          fi
+
+      - name: ✅ Check Build Output
+        run: |
+          if [ -d "indoxDocs/classic/build/" ]; then
+            echo "✅ Build directory exists!"
+            ls -la indoxDocs/classic/build/
+          else
+            echo "❌ Build directory missing!"
+            exit 1
+          fi
