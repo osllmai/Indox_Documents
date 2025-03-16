@@ -1,3 +1,30 @@
-- name: 🚀 Upload via SFTP
-  run: |
-    lftp -e "set sftp:auto-confirm yes; open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} sftp://${{ secrets.FTP_SERVER }}; mirror -R indoxDocs/classic/build/ /docs.osllm.ai/public_html/; bye"
+name: FTP Connection Test
+
+on:
+  workflow_dispatch:  # Manually trigger the test from GitHub Actions
+
+jobs:
+  test_ftp:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ✅ Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: ✅ Test FTP Connection
+        run: |
+          echo "🚀 Testing FTP connection..."
+          curl -v --ftp-pasv -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" \
+               ftp://${{ secrets.FTP_SERVER }}/
+    
+      - name: ✅ List FTP Directory
+        run: |
+          echo "📂 Listing FTP directory contents..."
+          curl --ftp-pasv -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" \
+               ftp://${{ secrets.FTP_SERVER }}/ -Q "LIST"
+    
+      - name: ✅ Upload Test File
+        run: |
+          echo "Hello, this is a test file!" > test.txt
+          curl --ftp-pasv -T test.txt -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" \
+               ftp://${{ secrets.FTP_SERVER }}/
