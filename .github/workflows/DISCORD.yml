@@ -23,6 +23,15 @@ jobs:
           echo "REPO=${{ github.repository }}" | tee -a $GITHUB_ENV
           echo "MARKDOWN_URL=https://github.com/osllmai/Indox_Documents/blob/master/README.md" | tee -a $GITHUB_ENV
 
+      - name: Fetch README.md Content
+        id: fetch_readme
+        run: |
+          README_URL="https://raw.githubusercontent.com/osllmai/Indox_Documents/refs/heads/master/README.md"
+          README_CONTENT=$(curl -s $README_URL | head -c 750)
+          README_CONTENT="${README_CONTENT//$'\n'/' '}"  # Remove newlines for better formatting
+          echo "README_PREVIEW=$README_CONTENT" >> $GITHUB_ENV
+          echo "✅ Fetched README preview successfully."
+
       - name: Fetch Latest Tag and Determine Next Version
         id: versioning
         run: |
@@ -54,11 +63,13 @@ jobs:
         run: |
           RELEASE_MESSAGE="🚀 *New Release: $NEW_TAG*\n\n\
           📂 Repository: [$REPO](https://github.com/$REPO)\n\
-          📜 [Documentation](https://github.com/osllmai/Indox_Documents/blob/master/README.md)\n\
+          📜 Documentation Update Preview:\n\
+          $README_PREVIEW...\n\n\
+          To continue reading, please visit: [Full Documentation]($MARKDOWN_URL)\n\
           🏷️ Version: $NEW_TAG\n\n\
           🔔 Stay updated with the latest releases!"
 
-          echo "MESSAGE_PAYLOAD=$RELEASE_MESSAGE" | tee -a $GITHUB_ENV
+          echo "MESSAGE_PAYLOAD=$RELEASE_MESSAGE" >> $GITHUB_ENV
           echo "✅ Message prepared successfully."
 
       - name: Send GitHub Event Notification to Discord
@@ -70,6 +81,7 @@ jobs:
             --arg repo "$REPO" \
             --arg markdown_url "$MARKDOWN_URL" \
             --arg tag "$NEW_TAG" \
+            --arg readme_preview "$README_PREVIEW" \
             '{
               "username": "Pheonix Bot",
               "avatar_url": "https://raw.githubusercontent.com/osllmai/phoenix/refs/heads/master/phoenix_qt/media/image_company/Phoenix.png",
@@ -84,8 +96,8 @@ jobs:
                       "inline": false
                     },
                     {
-                      "name": "📜 Documentation",
-                      "value": "[Click here](\($markdown_url))",
+                      "name": "📜 Documentation Update Preview",
+                      "value": "\($readme_preview)...\n\n[Read More](\($markdown_url))",
                       "inline": false
                     },
                     {
