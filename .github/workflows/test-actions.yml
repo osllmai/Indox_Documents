@@ -10,5 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: ✅ Check if Actions Runs
-        run: echo "GitHub Actions is running successfully!"
+      - name: ✅ Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: ✅ List Repository Files
+        run: ls -la
