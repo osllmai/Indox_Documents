@@ -23,6 +23,28 @@ jobs:
           echo "REPO=${{ github.repository }}" | tee -a $GITHUB_ENV
           echo "MARKDOWN_URL=https://github.com/osllmai/Indox_Documents/blob/master/README.md" | tee -a $GITHUB_ENV
 
+      - name: Load README.md Content
+        id: load_markdown
+        run: |
+          echo "🔍 DEBUG: Reading README.md..."
+          if [[ -f README.md ]]; then
+            MARKDOWN_CONTENT=$(head -c 800 README.md)
+            echo "✅ README.md content loaded."
+          else
+            echo "⚠️ WARNING: README.md not found!"
+            MARKDOWN_CONTENT="README.md could not be loaded."
+          fi
+
+          # Remove Markdown formatting
+          PLAIN_TEXT=$(echo "$MARKDOWN_CONTENT" | sed -e 's/#//g' -e 's/\*\*//g' -e 's/`//g')
+          PLAIN_TEXT="$PLAIN_TEXT\n\nTo continue reading: [Full Documentation](https://github.com/osllmai/Indox_Documents)"
+
+          # Store variables
+          delimiter=$(openssl rand -hex 6)
+          echo "PLAIN_TEXT<<${delimiter}" | tee -a $GITHUB_ENV
+          echo "$PLAIN_TEXT" | tee -a $GITHUB_ENV
+          echo "${delimiter}" | tee -a $GITHUB_ENV
+
       - name: Fetch Latest Tag and Determine Next Version
         id: versioning
         run: |
@@ -33,6 +55,7 @@ jobs:
 
           if [[ -z "$LATEST_TAG" ]]; then
             NEW_TAG="v0.1.0"
+            echo "🚀 First release, setting initial tag to $NEW_TAG"
           else
             if [[ "$LATEST_TAG" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
               MAJOR="${BASH_REMATCH[1]}"
@@ -55,6 +78,7 @@ jobs:
           RELEASE_MESSAGE="🚀 *New Release: $NEW_TAG*\n\n\
           📂 Repository: [$REPO](https://github.com/$REPO)\n\
           📜 [Documentation](https://github.com/osllmai/Indox_Documents/blob/master/README.md)\n\
+          📜 *Documentation Update Preview:*\n$PLAIN_TEXT\n\
           🏷️ Version: $NEW_TAG\n\n\
           🔔 Stay updated with the latest releases!"
 
@@ -70,6 +94,7 @@ jobs:
             --arg repo "$REPO" \
             --arg markdown_url "$MARKDOWN_URL" \
             --arg tag "$NEW_TAG" \
+            --arg preview "$PLAIN_TEXT" \
             '{
               "username": "GitHub Bot",
               "avatar_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
@@ -86,6 +111,11 @@ jobs:
                     {
                       "name": "📜 Documentation",
                       "value": "[Click here](\($markdown_url))",
+                      "inline": false
+                    },
+                    {
+                      "name": "📜 Documentation Update Preview",
+                      "value": "\($preview)",
                       "inline": false
                     },
                     {
@@ -115,4 +145,3 @@ jobs:
             --data-urlencode "parse_mode=Markdown")
 
           echo "✅ Telegram Response: $RESPONSE"
-
