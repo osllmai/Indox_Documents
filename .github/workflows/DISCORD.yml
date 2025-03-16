@@ -113,9 +113,6 @@ jobs:
           RESPONSE=$(curl -H "Content-Type: application/json" -X POST -d "$JSON_PAYLOAD" "$DISCORD_WEBHOOK_URL")
           echo "✅ Discord Response: $RESPONSE"
 
-
-
-
       - name: Send GitHub Event Notification to Telegram
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -124,10 +121,10 @@ jobs:
           echo "🔍 DEBUG: Sending message to Telegram..."
           TELEGRAM_URL="https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"
 
-          # Escape special characters for MarkdownV2
+          # Escape special characters for MarkdownV2 in Telegram
           ESCAPED_README_PREVIEW=$(echo "$README_PREVIEW" | sed -E 's/([_\*\[\]\(\)~`>#\+\-=|{}.!])/\\\1/g')
 
-          # Format the message for Telegram
+          # Format message for Telegram
           TELEGRAM_MESSAGE="🚀 *New Release: $NEW_TAG*\n\n\
           📂 Repository: [$REPO](https://github.com/$REPO)\n\
           📜 *Documentation Update Preview:*\n\
@@ -142,4 +139,3 @@ jobs:
             --data-urlencode "parse_mode=MarkdownV2")
 
           echo "✅ Telegram Response: $RESPONSE"
-
