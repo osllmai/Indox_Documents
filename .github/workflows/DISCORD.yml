@@ -114,6 +114,7 @@ jobs:
               ]
             }')
 
+
           echo "JSON Payload being sent to Discord:"
           echo "$JSON_PAYLOAD" | jq .  # Debugging
 
