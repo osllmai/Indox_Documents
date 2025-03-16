@@ -71,8 +71,8 @@ jobs:
             --arg markdown_url "$MARKDOWN_URL" \
             --arg tag "$NEW_TAG" \
             '{
-              "username": "GitHub Bot",
-              "avatar_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+              "username": "Pheonix Bot",
+              "avatar_url": "https://raw.githubusercontent.com/osllmai/phoenix/refs/heads/master/phoenix_qt/media/image_company/Phoenix.png,
               "embeds": [
                 {
                   "title": "🚀 Release \($tag)",
