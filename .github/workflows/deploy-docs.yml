@@ -30,25 +30,20 @@ jobs:
           cd indoxDocs/classic
           npm install || echo "⚠️ npm install failed!"
 
-      - name: Debug: Check Installed Dependencies
-        run: |
-          ls -la indoxDocs/classic/node_modules/ || echo "⚠️ Dependencies missing! npm install might have failed."
-
-      - name: Build Documentation (With Debugging)
+      - name: Build Documentation
         run: |
           cd indoxDocs/classic
           npm run build-docs || echo "⚠️ Build failed!"
-          echo "📂 Checking generated files:"
-          ls -la
+
+      - name: Debug: Check What’s Built
+        run: |
+          echo "📂 Checking generated files..."
+          find indoxDocs/classic/ -type d -print  # Show all folders created
+          ls -la indoxDocs/classic/  # List main directory contents
+          ls -la indoxDocs/classic/build/ || echo "⚠️ No build/ folder found!"
 
       - name: Ensure Build Directory Exists
-        run: mkdir -p indoxDocs/classic/build/
-
-      - name: Debug: Check Build Directory
-        run: |
-          echo "Checking if the build directory exists..."
-          ls -la indoxDocs/classic/ || echo "No such directory: indoxDocs/classic/"
-          ls -la indoxDocs/classic/build/ || echo "No such directory: indoxDocs/classic/build/"
+        run: mkdir -p indoxDocs/classic/build/  # Prevents missing directory errors
 
       - name: Upload to FTP Server
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
@@ -56,20 +51,5 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: indoxDocs/classic/build/  # Ensure this is correct
-          server-dir: /public_html/  # Adjust this based on your FTP server
-
-      - name: Capture Logs if Failure Occurs
-        if: failure()
-        run: |
-          echo "==== ERROR DETECTED ===="
-          echo "📜 npm Install Log:"
-          cat indoxDocs/classic/npm_install.log || echo "No log found."
-
-          echo "📜 Build Docs Log:"
-          cat indoxDocs/classic/build_docs.log || echo "No log found."
-
-          echo "📂 Checking Final Build Directory Contents:"
-          ls -la indoxDocs/classic/build/ || echo "Build folder missing!"
-
-          echo "🚨 Deployment failed! Check logs above for details."
+          local-dir: indoxDocs/classic/build/  # Uploads only the build directory
+          server-dir: /public_html/  # Adjust based on your FTP server
