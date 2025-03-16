@@ -13,111 +13,52 @@ jobs:
 
     steps:
       - name: ✅ Enable Debug Logging
-        run: |
-          echo "ACTIONS_STEP_DEBUG=true" >> $GITHUB_ENV
-          echo "✅ Debug logging enabled."
-
-      - name: ✅ Install `lftp` (for FTP Cleanup)
-        run: |
-          echo "📦 Installing lftp..."
-          sudo apt-get update && sudo apt-get install -y lftp
-          echo "✅ lftp installed successfully."
+        run: echo "ACTIONS_STEP_DEBUG=true" >> $GITHUB_ENV
 
       - name: ✅ Checkout Repository
         uses: actions/checkout@v3
         with:
-          ref: master  # Ensures master branch is used
+          ref: master
 
       - name: ✅ Install Dependencies
         run: |
           cd indoxDocs/classic
-          echo "📦 Running npm install..."
           npm install
-          echo "✅ npm install completed."
 
-      - name: ✅ Ensure `versions.json` Exists & List Versions
+      - name: ✅ Ensure `versions.json` Exists
         run: |
           cd indoxDocs/classic
           if [ ! -f versions.json ]; then
-            echo "❌ versions.json missing! Creating it now..."
-            echo '[]' > versions.json
-            echo "✅ versions.json created."
+            echo '["0.0.1", "0.1", "0.1.1"]' > versions.json
           fi
-          echo "📜 Existing versions.json content:"
           cat versions.json
-          echo "🔄 Listing all versions available:"
-          jq -r '.[]' versions.json || echo "⚠️ Unable to parse versions.json"
 
-      - name: ✅ Check & Debug `docusaurus.config.js`
+      - name: ✅ Force Rebuild All Versions
         run: |
           cd indoxDocs/classic
-          echo "🔍 Checking for versioning support in docusaurus.config.js..."
-          grep "versions" docusaurus.config.js || echo "⚠️ Warning: No versioning found in docusaurus.config.js"
-
-      - name: ✅ Force Full Docusaurus Rebuild (Clear Cache)
-        run: |
-          cd indoxDocs/classic
-          echo "🧹 Removing old build and cache..."
-          rm -rf build .docusaurus
-          echo "✅ Cache cleared."
-
-      - name: 🚀 Build All Versions of Documentation
-        run: |
-          cd indoxDocs/classic
-          echo "📦 Running full Docusaurus build..."
           npm run docusaurus clear
-          npm run build
-          echo "✅ Full rebuild completed."
+          npm run build -- --out-dir build
 
-      - name: ✅ Verify Built Versions Before FTP Upload
+      - name: ✅ Verify Build Output
+        run: ls -la indoxDocs/classic/build/
+
+      - name: 🚀 Clean FTP Directory Before Upload
         run: |
-          cd indoxDocs/classic/build
-          echo "📂 Checking all built versions..."
-          ls -laR
-          echo "🔍 Detecting versions from build directory:"
-          ls -d */ | sed 's#/##'
+          curl -u ${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }} \
+               ftp://${{ secrets.FTP_SERVER }}/docs.osllm.ai/public_html/ \
+               -Q "DELE *"
 
-      - name: ✅ List Built Versions Before FTP Upload
-        run: |
-          echo "📂 Contents of build directory before FTP upload:"
-          ls -laR indoxDocs/classic/build/
-
-      - name: 🚨 Clean Up Existing Files on Server (Before Upload)
-        run: |
-          echo "🚨 Connecting to FTP server and deleting all files before uploading..."
-          lftp -c "set ftp:ssl-allow no; open ${{ secrets.FTP_SERVER }} -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }}; rm -r docs.osllm.ai/public_html/*; bye"
-          echo "✅ Server cleanup completed."
-
-      - name: ✅ Upload New Build to FTP Server
+      - name: ✅ Upload to FTP Server
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: indoxDocs/classic/build/  # Uploads only the contents, not build/
-          server-dir: docs.osllm.ai/public_html/  # Ensure files go directly inside public_html
+          local-dir: indoxDocs/classic/build/
+          server-dir: docs.osllm.ai/public_html/
           exclude: |
             **/.git*
             **/.github*
             **/node_modules/*
-            **/build/**  # Prevents nesting the build folder itself
-
-      - name: 🚨 Capture Logs if Failure Occurs
-        if: ${{ failure() }}
-        run: |
-          echo "🚨 ERROR DETECTED!"
-          echo "📜 npm Install Log:"
-          cat indoxDocs/classic/npm_install.log || echo "⚠️ No npm install log found."
-
-          echo "📜 Build Docs Log:"
-          cat indoxDocs/classic/build_docs.log || echo "⚠️ No build-docs log found."
-
-          echo "📂 Checking Final Build Directory Contents:"
-          if [ -d "indoxDocs/classic/build/" ]; then
-            echo "✅ Build directory exists!"
-            ls -laR indoxDocs/classic/build/
-          else
-            echo "❌ Build directory is missing!"
-          fi
-
-          echo "🚨 Deployment failed! Check logs above for details."
+          dangerous-clean-slate: true
+          log-level: verbose
