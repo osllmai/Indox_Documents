@@ -64,7 +64,7 @@ jobs:
           server-dir: /public_html/  # Adjust based on your FTP server
 
       - name: Capture Logs if Failure Occurs
-        if: failure()
+        if: ${{ failure() }}
         run: |
           echo "🚨 ERROR DETECTED!"
           echo "📜 npm Install Log:"
