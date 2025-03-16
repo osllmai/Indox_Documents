@@ -28,7 +28,6 @@ jobs:
         run: |
           README_URL="https://raw.githubusercontent.com/osllmai/Indox_Documents/refs/heads/master/README.md"
           README_CONTENT=$(curl -s $README_URL | head -c 750)
-          README_CONTENT="${README_CONTENT//$'\n'/' '}"  # Remove newlines for better formatting
           echo "README_PREVIEW=$README_CONTENT" >> $GITHUB_ENV
           echo "✅ Fetched README preview successfully."
 
@@ -121,7 +120,7 @@ jobs:
           echo "🔍 DEBUG: Sending message to Telegram..."
           TELEGRAM_URL="https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"
 
-          # Properly escape MarkdownV2 special characters for Telegram
+          # Properly escape special characters for MarkdownV2
           ESCAPED_README_PREVIEW=$(echo "$README_PREVIEW" | sed -E 's/([]_*\[\]()~`>#\+\-=|{}.!])/\\\1/g')
 
           # Format message for Telegram
@@ -139,4 +138,3 @@ jobs:
             --data-urlencode "parse_mode=MarkdownV2")
 
           echo "✅ Telegram Response: $RESPONSE"
-
