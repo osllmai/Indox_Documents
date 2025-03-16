@@ -40,8 +40,8 @@ jobs:
       - name: Build Documentation (With Debugging)
         run: |
           cd indoxDocs/classic
-          echo "📦 Running npm run build-docs..."
-          npm run build-docs 2>&1 | tee build_docs.log || echo "⚠️ Build failed!"
+          echo "📦 Running npm run build..."
+          npm run build 2>&1 | tee build_docs.log || echo "⚠️ Build failed!"
           echo "✅ Build completed."
 
       - name: Debug: Check What’s Built
