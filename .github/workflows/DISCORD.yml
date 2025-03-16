@@ -13,20 +13,15 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
-          clean: false
+          fetch-depth: 0  # Fetch full history to get all tags
 
       - name: Gather Deployment Information
         id: gather_info
         run: |
           TIMESTAMP=$(date -u "+%A, %B %d %Y, %I:%M:%S %p UTC")
-          TAG_NAME="v$(date +'%Y%m%d-%H%M%S')"
-          VERSION_NAME="$(date +'%Y.%m.%d')"
-          
           echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
           echo "REPO=${{ github.repository }}" >> $GITHUB_ENV
           echo "MARKDOWN_URL=https://github.com/osllmai/Indox_Documents/blob/master/README.md" >> $GITHUB_ENV
-          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
-          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
 
       - name: Load README.md Content
         id: load_markdown
@@ -34,39 +29,81 @@ jobs:
           # Read local README.md and limit to 800 characters
           MARKDOWN_CONTENT=$(cat README.md | head -c 800)
 
-          # Remove Markdown formatting (e.g., #, **, etc.)
+          # Remove Markdown formatting
           PLAIN_TEXT=$(echo "$MARKDOWN_CONTENT" | sed -e 's/#//g' -e 's/\*\*//g' -e 's/`//g')
 
-          # Add "Continue reading" link at the end
+          # Add "Continue reading" link
           PLAIN_TEXT="$PLAIN_TEXT\n\nTo continue reading, please visit: https://github.com/osllmai/Indox_Documents"
 
-          # Fallback if empty
+          # Fallback message if empty
           if [ -z "$PLAIN_TEXT" ]; then
             PLAIN_TEXT="README.md could not be loaded. To view the documentation, please visit: https://github.com/osllmai/Indox_Documents"
           fi
 
-          # Store with heredoc to handle newlines
+          # Store variable
           delimiter=$(openssl rand -hex 6)
           echo "PLAIN_TEXT<<${delimiter}" >> $GITHUB_ENV
           echo "$PLAIN_TEXT" >> $GITHUB_ENV
           echo "${delimiter}" >> $GITHUB_ENV
 
-      - name: Create and Push Git Tag
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Determine versioning based on existing tags
+      - name: Fetch Latest Tag and Determine Next Version
+        id: versioning
+        run: |
+          # Fetch all tags
+          git fetch --tags
+
+          # Get the latest versioned tag
+          LATEST_TAG=$(git tag -l "v*" --sort=-v:refname | head -n 1 | tr -d '\r')
+
+          # If no tags exist, start with v0.1.0
+          if [[ -z "$LATEST_TAG" ]]; then
+            NEW_TAG="v0.1.0"
+          else
+            # Extract version numbers
+            if [[ "$LATEST_TAG" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+              MAJOR="${BASH_REMATCH[1]}"
+              MINOR="${BASH_REMATCH[2]}"
+              PATCH="${BASH_REMATCH[3]}"
+            else
+              echo "Error: Could not parse latest tag '$LATEST_TAG'"
+              exit 1
+            fi
+
+            # Increment patch version (e.g., v0.1.0 → v0.1.1)
+            PATCH=$((PATCH + 1))
+            NEW_TAG="v$MAJOR.$MINOR.$PATCH"
+          fi
+
+          echo "LATEST_TAG=$LATEST_TAG"
+          echo "NEW_TAG=$NEW_TAG"
+
+          # Store variables in GitHub Actions environment
+          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
+          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
+
+      # Configure Git User
+      - name: Configure Git User
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          git tag $TAG_NAME
-          git push origin $TAG_NAME
 
+      # Create and Push New Git Tag
+      - name: Create and Push New Git Tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git tag "$NEW_TAG"
+          git push origin "$NEW_TAG"
+
+      # Create GitHub Release
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create $TAG_NAME \
-            --title "Release $VERSION_NAME" \
-            --notes "Automated release generated on $TIMESTAMP."
+          gh release create "$NEW_TAG" \
+            --title "Release $NEW_TAG" \
+            --notes "Automated release generated for $NEW_TAG."
 
       - name: Send GitHub Event Notification to Discord
         env:
@@ -76,8 +113,7 @@ jobs:
           echo "Sending the following payload to Discord:"
           echo "TIMESTAMP: $TIMESTAMP"
           echo "REPO: $REPO"
-          echo "TAG_NAME: $TAG_NAME"
-          echo "VERSION_NAME: $VERSION_NAME"
+          echo "TAG_NAME: $NEW_TAG"
           echo "MARKDOWN_URL: $MARKDOWN_URL"
           echo "PLAIN_TEXT (preview):"
           echo "$PLAIN_TEXT"
@@ -86,16 +122,15 @@ jobs:
             --arg timestamp "$TIMESTAMP" \
             --arg repo "$REPO" \
             --arg markdown_url "$MARKDOWN_URL" \
-            --arg tag "$TAG_NAME" \
-            --arg version "$VERSION_NAME" \
+            --arg tag "$NEW_TAG" \
             --arg plain_text "$PLAIN_TEXT" \
             '{
               "username": "GitHub Bot",
               "avatar_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
               "embeds": [
                 {
-                  "title": "🚀 Release \($version)",
-                  "description": "We are excited to announce the latest release of our project! This update includes key improvements and enhancements.",
+                  "title": "🚀 Release \($tag)",
+                  "description": "New release deployed automatically!",
                   "fields": [
                     {
                       "name": "📅 Timestamp",
@@ -113,13 +148,8 @@ jobs:
                       "inline": false
                     },
                     {
-                      "name": "🏷️ Tag",
-                      "value": "\($tag) - \($timestamp)",
-                      "inline": false
-                    },
-                    {
-                      "name": "🚀 Version",
-                      "value": "Release \($version)",
+                      "name": "🏷️ Version",
+                      "value": "\($tag)",
                       "inline": false
                     }
                   ]
