@@ -1,4 +1,4 @@
-name: GitHub to Discord Notification (Master)
+name: GitHub to Discord & Telegram Notification (Master)
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  notify_discord:
+  notify_discord_telegram:
     runs-on: ubuntu-latest
     steps:
 
@@ -22,29 +22,6 @@ jobs:
           echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
           echo "REPO=${{ github.repository }}" >> $GITHUB_ENV
           echo "MARKDOWN_URL=https://github.com/osllmai/Indox_Documents/blob/master/README.md" >> $GITHUB_ENV
-
-      - name: Load README.md Content
-        id: load_markdown
-        run: |
-          # Read local README.md and limit to 800 characters
-          MARKDOWN_CONTENT=$(cat README.md | head -c 800)
-
-          # Remove Markdown formatting
-          PLAIN_TEXT=$(echo "$MARKDOWN_CONTENT" | sed -e 's/#//g' -e 's/\*\*//g' -e 's/`//g')
-
-          # Add "Continue reading" link
-          PLAIN_TEXT="$PLAIN_TEXT\n\nTo continue reading, please visit: https://github.com/osllmai/Indox_Documents"
-
-          # Fallback message if empty
-          if [ -z "$PLAIN_TEXT" ]; then
-            PLAIN_TEXT="README.md could not be loaded. To view the documentation, please visit: https://github.com/osllmai/Indox_Documents"
-          fi
-
-          # Store variable
-          delimiter=$(openssl rand -hex 6)
-          echo "PLAIN_TEXT<<${delimiter}" >> $GITHUB_ENV
-          echo "$PLAIN_TEXT" >> $GITHUB_ENV
-          echo "${delimiter}" >> $GITHUB_ENV
 
       - name: Fetch Latest Tag and Determine Next Version
         id: versioning
@@ -105,21 +82,10 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_MASTER_URL }}
         run: |
-          set -x  # Enable debugging
-          echo "Sending the following payload to Discord:"
-          echo "TIMESTAMP: $TIMESTAMP"
-          echo "REPO: $REPO"
-          echo "TAG_NAME: $NEW_TAG"
-          echo "MARKDOWN_URL: $MARKDOWN_URL"
-          echo "PLAIN_TEXT (preview):"
-          echo "$PLAIN_TEXT"
-
           JSON_PAYLOAD=$(jq -n \
-            --arg timestamp "$TIMESTAMP" \
             --arg repo "$REPO" \
             --arg markdown_url "$MARKDOWN_URL" \
             --arg tag "$NEW_TAG" \
-            --arg plain_text "$PLAIN_TEXT" \
             '{
               "username": "GitHub Bot",
               "avatar_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
@@ -129,18 +95,13 @@ jobs:
                   "description": "New release deployed automatically!",
                   "fields": [
                     {
-                      "name": "📅 Timestamp",
-                      "value": $timestamp,
-                      "inline": false
-                    },
-                    {
                       "name": "📂 Repository",
                       "value": "[\($repo)](https://github.com/\($repo))",
                       "inline": false
                     },
                     {
                       "name": "📜 Documentation",
-                      "value": "[Click here](\($markdown_url))\n\n\($plain_text)",
+                      "value": "[Click here](\($markdown_url))",
                       "inline": false
                     },
                     {
@@ -153,8 +114,21 @@ jobs:
               ]
             }')
 
-          # Validate JSON formatting before sending
-          echo "$JSON_PAYLOAD" | jq .
-
           # Send to Discord webhook
           curl -H "Content-Type: application/json" -X POST -d "$JSON_PAYLOAD" "$DISCORD_WEBHOOK_URL"
+
+      - name: Send GitHub Event Notification to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          TELEGRAM_MESSAGE="🚀 *New Release: $NEW_TAG*\n\n\
+          📂 Repository: [$REPO](https://github.com/$REPO)\n\
+          📜 [Documentation](https://github.com/osllmai/Indox_Documents/blob/master/README.md)\n\
+          🏷️ Version: $NEW_TAG\n\n\
+          🔔 Stay updated with the latest releases!"
+
+          curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
+            -d chat_id="$TELEGRAM_CHAT_ID" \
+            -d parse_mode="Markdown" \
+            -d text="$TELEGRAM_MESSAGE"
