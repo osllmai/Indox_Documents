@@ -48,7 +48,7 @@ jobs:
                ftp://${{ secrets.FTP_SERVER }}/docs.osllm.ai/public_html/ \
                -Q "DELE *"
 
-      - name: ✅ Upload to FTP Server
+      - name: ✅ Upload to FTP Server (Force Overwrite)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -60,5 +60,6 @@ jobs:
             **/.git*
             **/.github*
             **/node_modules/*
-          dangerous-clean-slate: true
-          log-level: verbose
+          force: true  # Forces overwriting existing files
+          log-level: verbose  # Shows detailed upload logs
+
