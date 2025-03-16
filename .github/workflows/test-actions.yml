@@ -13,5 +13,12 @@ jobs:
       - name: ✅ Checkout Repository
         uses: actions/checkout@v3
 
-      - name: ✅ List Repository Files
-        run: ls -la
+      - name: ✅ Verify `indoxDocs/classic/` Exists
+        run: |
+          if [ -d "indoxDocs/classic/" ]; then
+            echo "✅ Directory exists!"
+            ls -la indoxDocs/classic/
+          else
+            echo "❌ Directory missing!"
+            exit 1
+          fi
