@@ -29,11 +29,11 @@ jobs:
           npm install
           echo "✅ npm install completed."
 
-      - name: ✅ Verify `versions.json` Exists
+      - name: ✅ Verify & Update `versions.json`
         run: |
           cd indoxDocs/classic
           if [ -f versions.json ]; then
-            echo "📜 Found versions.json, forcing all versions to be built."
+            echo "📜 Found existing versions.json. Content:"
             cat versions.json
           else
             echo "❌ versions.json missing! Creating it now..."
@@ -41,27 +41,42 @@ jobs:
             echo "✅ versions.json created."
           fi
 
-      - name: ✅ Force Rebuild All Versions
+      - name: ✅ Debug `versions.json` Before Build
         run: |
           cd indoxDocs/classic
-          echo "🧹 Clearing old cache to ensure all versions build..."
-          npm run docusaurus clear
-          
+          echo "📜 Checking versions.json before build:"
+          cat versions.json
+
+      - name: ✅ Force Full Docusaurus Rebuild (Clear Cache)
+        run: |
+          cd indoxDocs/classic
+          echo "🧹 Removing old build and cache..."
+          rm -rf build .docusaurus
+          echo "✅ Cache cleared."
+
+      - name: ✅ Build All Versions of Documentation
+        run: |
+          cd indoxDocs/classic
           echo "📦 Running full Docusaurus build..."
-          npm run build -- --out-dir build
-          echo "✅ Full rebuild completed with all versions."
+          npm run build
+          echo "✅ Full rebuild completed."
 
       - name: ✅ Verify Build Output
         run: |
-          echo "📂 Checking all generated files..."
-          find indoxDocs/classic/build/ -type d -print  # Show all built folders
-          ls -la indoxDocs/classic/build/  # List main directory contents
-          if [ -d "indoxDocs/classic/build/" ]; then
+          cd indoxDocs/classic/build
+          echo "📂 Checking all generated versions..."
+          ls -laR
+          if [ -d "indoxDocs/classic/build" ]; then
             echo "✅ Build directory exists!"
           else
             echo "❌ Build directory missing!"
             exit 1
           fi
+
+      - name: ✅ List Built Versions Before FTP Upload
+        run: |
+          echo "📂 Contents of build directory before FTP upload:"
+          ls -laR indoxDocs/classic/build/
 
       - name: ✅ Upload to FTP Server
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
@@ -90,7 +105,7 @@ jobs:
           echo "📂 Checking Final Build Directory Contents:"
           if [ -d "indoxDocs/classic/build/" ]; then
             echo "✅ Build directory exists!"
-            ls -la indoxDocs/classic/build/
+            ls -laR indoxDocs/classic/build/
           else
             echo "❌ Build directory is missing!"
           fi
