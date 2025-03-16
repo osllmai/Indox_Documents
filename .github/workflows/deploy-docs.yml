@@ -28,27 +28,36 @@ jobs:
       - name: Install Dependencies
         run: |
           cd indoxDocs/classic
-          npm install 2>&1 | tee npm_install.log  # Logs npm install output
+          npm install || echo "⚠️ npm install failed!"
 
-      - name: Build Documentation
+      - name: Debug: Check Installed Dependencies
+        run: |
+          ls -la indoxDocs/classic/node_modules/ || echo "⚠️ Dependencies missing! npm install might have failed."
+
+      - name: Build Documentation (With Debugging)
         run: |
           cd indoxDocs/classic
-          npm run build-docs 2>&1 | tee build_docs.log  # Logs build process
+          npm run build-docs || echo "⚠️ Build failed!"
+          echo "📂 Checking generated files:"
+          ls -la
 
-      - name: Check Build Output (Debugging Step)
+      - name: Ensure Build Directory Exists
+        run: mkdir -p indoxDocs/classic/build/
+
+      - name: Debug: Check Build Directory
         run: |
-          echo "Checking if documentation is built..."
-          ls -la indoxDocs/classic/build/ || echo "Build folder not found!"
-          du -sh indoxDocs/classic/build/ || echo "Build folder is empty!"
+          echo "Checking if the build directory exists..."
+          ls -la indoxDocs/classic/ || echo "No such directory: indoxDocs/classic/"
+          ls -la indoxDocs/classic/build/ || echo "No such directory: indoxDocs/classic/build/"
 
       - name: Upload to FTP Server
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4  # Ensures latest version
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: indoxDocs/classic/build/  # Ensure this is the correct build output folder
-          server-dir: /public_html/  # Ensure this is correct for your FTP server
+          local-dir: indoxDocs/classic/build/  # Ensure this is correct
+          server-dir: /public_html/  # Adjust this based on your FTP server
 
       - name: Capture Logs if Failure Occurs
         if: failure()
