@@ -19,38 +19,18 @@ jobs:
         id: gather_info
         run: |
           TIMESTAMP=$(date -u "+%A, %B %d %Y, %I:%M:%S %p UTC")
-          echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
-          echo "REPO=${{ github.repository }}" >> $GITHUB_ENV
-          echo "MARKDOWN_URL=https://github.com/osllmai/Indox_Documents/blob/master/README.md" >> $GITHUB_ENV
-
-      - name: Load README.md Content
-        id: load_markdown
-        run: |
-          # Read local README.md and limit to 800 characters
-          MARKDOWN_CONTENT=$(cat README.md | head -c 800)
-
-          # Remove Markdown formatting
-          PLAIN_TEXT=$(echo "$MARKDOWN_CONTENT" | sed -e 's/#//g' -e 's/\*\*//g' -e 's/`//g')
-
-          # Add "Continue reading" link
-          PLAIN_TEXT="$PLAIN_TEXT\n\nTo continue reading, please visit: https://github.com/osllmai/Indox_Documents"
-
-          # Fallback message if empty
-          if [ -z "$PLAIN_TEXT" ]; then
-            PLAIN_TEXT="README.md could not be loaded. To view the documentation, please visit: https://github.com/osllmai/Indox_Documents"
-          fi
-
-          # Store variable
-          delimiter=$(openssl rand -hex 6)
-          echo "PLAIN_TEXT<<${delimiter}" >> $GITHUB_ENV
-          echo "$PLAIN_TEXT" >> $GITHUB_ENV
-          echo "${delimiter}" >> $GITHUB_ENV
+          echo "TIMESTAMP=$TIMESTAMP" | tee -a $GITHUB_ENV
+          echo "REPO=${{ github.repository }}" | tee -a $GITHUB_ENV
+          echo "MARKDOWN_URL=https://github.com/osllmai/Indox_Documents/blob/master/README.md" | tee -a $GITHUB_ENV
 
       - name: Fetch Latest Tag and Determine Next Version
         id: versioning
         run: |
+          echo "🔍 DEBUG: Fetching latest tags..."
           git fetch --tags
           LATEST_TAG=$(git tag -l "v*" --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 | tr -d '\r')
+          echo "📌 Latest Tag Found: $LATEST_TAG"
+
           if [[ -z "$LATEST_TAG" ]]; then
             NEW_TAG="v0.1.0"
           else
@@ -58,55 +38,38 @@ jobs:
               MAJOR="${BASH_REMATCH[1]}"
               MINOR="${BASH_REMATCH[2]}"
               PATCH="${BASH_REMATCH[3]}"
+              PATCH=$((PATCH + 1))
+              NEW_TAG="v$MAJOR.$MINOR.$PATCH"
+              echo "✅ Next Tag: $NEW_TAG"
             else
-              echo "Error: Could not parse latest valid semantic version tag '$LATEST_TAG'"
+              echo "❌ ERROR: Could not parse latest tag '$LATEST_TAG'"
               exit 1
             fi
-            PATCH=$((PATCH + 1))
-            NEW_TAG="v$MAJOR.$MINOR.$PATCH"
           fi
-          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
-          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
 
-      - name: Configure Git User
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
+          echo "NEW_TAG=$NEW_TAG" | tee -a $GITHUB_ENV
 
-      - name: Create and Push New Git Tag
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git tag "$NEW_TAG"
-          git push origin "$NEW_TAG"
-
-      - name: Create GitHub Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release create "$NEW_TAG" \
-            --title "Release $NEW_TAG" \
-            --notes "Automated release generated for $NEW_TAG."
-
-      - name: Send GitHub Event Notification to Discord & Telegram
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_MASTER_URL }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHANNEL_NAME: ${{ secrets.TELEGRAM_CHANNEL_NAME }}
+      - name: Prepare Message
+        id: prepare_message
         run: |
           RELEASE_MESSAGE="🚀 *New Release: $NEW_TAG*\n\n\
           📂 Repository: [$REPO](https://github.com/$REPO)\n\
           📜 [Documentation](https://github.com/osllmai/Indox_Documents/blob/master/README.md)\n\
-          📜 *Documentation Update Preview:*\n$PLAIN_TEXT\n\
           🏷️ Version: $NEW_TAG\n\n\
           🔔 Stay updated with the latest releases!"
 
-          # Send to Discord
+          echo "MESSAGE_PAYLOAD=$RELEASE_MESSAGE" | tee -a $GITHUB_ENV
+          echo "✅ Message prepared successfully."
+
+      - name: Send GitHub Event Notification to Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_MASTER_URL }}
+        run: |
+          echo "🔍 DEBUG: Sending message to Discord..."
           JSON_PAYLOAD=$(jq -n \
             --arg repo "$REPO" \
             --arg markdown_url "$MARKDOWN_URL" \
             --arg tag "$NEW_TAG" \
-            --arg preview "$PLAIN_TEXT" \
             '{
               "username": "GitHub Bot",
               "avatar_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
@@ -126,11 +89,6 @@ jobs:
                       "inline": false
                     },
                     {
-                      "name": "📜 Documentation Update Preview",
-                      "value": "\($preview)",
-                      "inline": false
-                    },
-                    {
                       "name": "🏷️ Version",
                       "value": "\($tag)",
                       "inline": false
@@ -140,10 +98,21 @@ jobs:
               ]
             }')
 
-          curl -H "Content-Type: application/json" -X POST -d "$JSON_PAYLOAD" "$DISCORD_WEBHOOK_URL"
+          RESPONSE=$(curl -H "Content-Type: application/json" -X POST -d "$JSON_PAYLOAD" "$DISCORD_WEBHOOK_URL")
+          echo "✅ Discord Response: $RESPONSE"
 
-          # Send to Telegram
-          curl -s -X GET "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
+      - name: Send GitHub Event Notification to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL_NAME: ${{ secrets.TELEGRAM_CHANNEL_NAME }}
+        run: |
+          echo "🔍 DEBUG: Sending message to Telegram..."
+          TELEGRAM_URL="https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"
+
+          RESPONSE=$(curl -s -G "$TELEGRAM_URL" \
             --data-urlencode "chat_id=$TELEGRAM_CHANNEL_NAME" \
-            --data-urlencode "text=$RELEASE_MESSAGE" \
-            --data-urlencode "parse_mode=Markdown"
+            --data-urlencode "text=$MESSAGE_PAYLOAD" \
+            --data-urlencode "parse_mode=Markdown")
+
+          echo "✅ Telegram Response: $RESPONSE"
+
