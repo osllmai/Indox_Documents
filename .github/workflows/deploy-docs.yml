@@ -12,6 +12,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Enable Debug Logging
+        run: echo "ACTIONS_STEP_DEBUG=true" >> $GITHUB_ENV
+
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
@@ -23,19 +26,41 @@ jobs:
           node-version: '20'
 
       - name: Install Dependencies
-        run: npm install
+        run: |
+          cd indoxDocs/classic
+          npm install 2>&1 | tee npm_install.log  # Logs npm install output
 
       - name: Build Documentation
         run: |
-          cd indoxDocs/classic  # Navigate to the correct directory
-          npm install           # Ensure dependencies are installed
-          npm run build-docs    # Adjust this based on your actual build command
+          cd indoxDocs/classic
+          npm run build-docs 2>&1 | tee build_docs.log  # Logs build process
+
+      - name: Check Build Output (Debugging Step)
+        run: |
+          echo "Checking if documentation is built..."
+          ls -la indoxDocs/classic/build/ || echo "Build folder not found!"
+          du -sh indoxDocs/classic/build/ || echo "Build folder is empty!"
 
       - name: Upload to FTP Server
-        uses: SamKirkland/FTP-Deploy-Action@v4
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4  # Ensures latest version
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: indoxDocs/classic/build/  # Adjust based on where your build outputs files
+          local-dir: indoxDocs/classic/build/  # Ensure this is the correct build output folder
           server-dir: /public_html/  # Ensure this is correct for your FTP server
+
+      - name: Capture Logs if Failure Occurs
+        if: failure()
+        run: |
+          echo "==== ERROR DETECTED ===="
+          echo "📜 npm Install Log:"
+          cat indoxDocs/classic/npm_install.log || echo "No log found."
+
+          echo "📜 Build Docs Log:"
+          cat indoxDocs/classic/build_docs.log || echo "No log found."
+
+          echo "📂 Checking Final Build Directory Contents:"
+          ls -la indoxDocs/classic/build/ || echo "Build folder missing!"
+
+          echo "🚨 Deployment failed! Check logs above for details."
