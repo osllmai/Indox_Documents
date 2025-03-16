@@ -82,7 +82,8 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: /public_html/  # Adjust based on your FTP server
       #     local-dir: indoxDocs/classic/build/  # Uploads only the build directory
-      #     server-dir: /public_html/  # Adjust based on your FTP server
+         
 
 
