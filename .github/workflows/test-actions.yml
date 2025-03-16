@@ -76,13 +76,13 @@ jobs:
           mkdir -p indoxDocs/classic/build/
           echo "✅ Build directory ensured."
 
-      - name: ✅ Upload to FTP Server
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: indoxDocs/classic/build/  # Uploads only the build directory
-          server-dir: /public_html/  # Adjust based on your FTP server
+      # - name: ✅ Upload to FTP Server
+      #   uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      #   with:
+      #     server: ${{ secrets.FTP_SERVER }}
+      #     username: ${{ secrets.FTP_USERNAME }}
+      #     password: ${{ secrets.FTP_PASSWORD }}
+      #     local-dir: indoxDocs/classic/build/  # Uploads only the build directory
+      #     server-dir: /public_html/  # Adjust based on your FTP server
 
 
