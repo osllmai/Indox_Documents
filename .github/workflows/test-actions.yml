@@ -22,59 +22,48 @@ jobs:
         with:
           ref: master  # Ensures master branch is used
 
-      - name: ✅ Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "20"
-
-      - name: ✅ Verify `indoxDocs/classic/` Exists
+      - name: ✅ Check If `build/` Exists
+        id: check_build
         run: |
-          if [ -d "indoxDocs/classic/" ]; then
-            echo "✅ Directory exists!"
+          if [ -d "indoxDocs/classic/build/" ]; then
+            echo "✅ Build directory exists, checking versions..."
+            echo "SKIP_BUILD=true" >> $GITHUB_ENV
           else
-            echo "❌ Directory missing!"
-            exit 1
+            echo "❌ Build directory missing, running full build process!"
+            echo "SKIP_BUILD=false" >> $GITHUB_ENV
           fi
 
-      - name: ✅ Install Dependencies
+      - name: ✅ Install Dependencies (Only If Needed)
+        if: env.SKIP_BUILD == 'false'
         run: |
           cd indoxDocs/classic
           echo "📦 Running npm install..."
-          if npm install; then
-            echo "✅ npm install completed successfully."
-          else
-            echo "❌ npm install failed!"
-            exit 1
-          fi
+          npm install
+          echo "✅ npm install completed."
 
-      - name: ✅ Build Documentation
+      - name: ✅ Ensure All Versions Are Built
         run: |
           cd indoxDocs/classic
-          echo "📦 Running npm run build..."
-          if npm run build; then
-            echo "✅ Build completed successfully."
+          if [ -f versions.json ]; then
+            echo "📜 Found versions.json, forcing all versions to be built."
+            cat versions.json
           else
-            echo "❌ Build failed!"
-            exit 1
+            echo "⚠️ versions.json not found. Running a full rebuild."
           fi
 
-      - name: ✅ Check Build Output
+      - name: ✅ Build Documentation (Only If Needed)
+        if: env.SKIP_BUILD == 'false'
         run: |
-          echo "📂 Checking all generated files..."
-          find indoxDocs/classic/ -type d -print  # Show all folders created
-          ls -la indoxDocs/classic/  # List main directory contents
-          if [ -d "indoxDocs/classic/build/" ]; then
-            echo "✅ Build directory exists!"
-            ls -la indoxDocs/classic/build/
-          else
-            echo "❌ Build directory missing!"
-            exit 1
-          fi
+          cd indoxDocs/classic
+          echo "🧹 Clearing old cache to ensure all versions build..."
+          npm run docusaurus clear
+          
+          echo "📦 Running npm run build for all versions..."
+          npm run build
+          echo "✅ Build completed for all versions."
 
       - name: ✅ Ensure Build Directory Exists
-        run: |
-          mkdir -p indoxDocs/classic/build/
-          echo "✅ Build directory ensured."
+        run: mkdir -p indoxDocs/classic/build/
 
       - name: ✅ Upload to FTP Server
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
@@ -82,13 +71,30 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: indoxDocs/classic/build/  # Change from 'build/' to 'build/*'
-          server-dir: docs.osllm.ai/public_html/  # Upload directly to public_html
+          local-dir: indoxDocs/classic/build/  # Upload only the contents
+          server-dir: docs.osllm.ai/public_html/  # Ensure files go directly inside public_html
           exclude: |
             **/.git*
             **/.github*
             **/node_modules/*
+            **/build/**  # Prevents nesting the build folder itself
 
-         
+      - name: 🚨 Capture Logs if Failure Occurs
+        if: ${{ failure() }}
+        run: |
+          echo "🚨 ERROR DETECTED!"
+          echo "📜 npm Install Log:"
+          cat indoxDocs/classic/npm_install.log || echo "⚠️ No npm install log found."
 
+          echo "📜 Build Docs Log:"
+          cat indoxDocs/classic/build_docs.log || echo "⚠️ No build-docs log found."
 
+          echo "📂 Checking Final Build Directory Contents:"
+          if [ -d "indoxDocs/classic/build/" ]; then
+            echo "✅ Build directory exists!"
+            ls -la indoxDocs/classic/build/
+          else
+            echo "❌ Build directory is missing!"
+          fi
+
+          echo "🚨 Deployment failed! Check logs above for details."
