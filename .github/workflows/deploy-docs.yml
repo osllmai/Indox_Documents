@@ -1,0 +1,38 @@
+name: Deploy Docs via FTP
+
+on:
+  release:
+    types: [published]
+  push:
+    branches:
+      - master  # Runs only when code is pushed to master
+
+jobs:
+  deploy_docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          ref: master  # Ensures master branch is used
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Documentation
+        run: npm run build-docs  # Adjust to match your actual build command
+
+      - name: Upload to FTP Server
+        uses: SamKirkland/FTP-Deploy-Action@v4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./docs/  # Adjust based on your build output
+          server-dir: /public_html/  # Ensures deployment to docs.osllm.ai/public_html
