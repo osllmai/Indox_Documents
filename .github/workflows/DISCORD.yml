@@ -11,28 +11,15 @@ permissions:
 jobs:
   tag_and_release:
     runs-on: ubuntu-latest
+    outputs:
+      NEW_TAG: ${{ steps.versioning.outputs.NEW_TAG }}
+      PLAIN_TEXT: ${{ steps.load_markdown.outputs.PLAIN_TEXT }}  # Pass Markdown content
     steps:
 
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Fetch full history to get all tags
-
-      - name: Determine Branch and Set Label
-        id: branch_label
-        run: |
-          BRANCH_NAME=${{ github.ref_name }}
-
-          if [[ "$BRANCH_NAME" == "master" ]]; then
-            LABEL="Master"
-          elif [[ "$BRANCH_NAME" == "development" ]]; then
-            LABEL="Dev"
-          else
-            echo "Error: Unsupported branch '$BRANCH_NAME'."
-            exit 1
-          fi
-
-          echo "LABEL=$LABEL" >> $GITHUB_ENV
+          fetch-depth: 0  # Ensure full history
 
       - name: Fetch Latest Tag and Determine Next Version
         id: versioning
@@ -57,26 +44,23 @@ jobs:
           fi
 
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
+          echo "::set-output name=NEW_TAG::$NEW_TAG"
 
-      - name: Configure Git User
+      - name: Load README.md Content (First 800 Characters)
+        id: load_markdown
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
+          if [[ -f README.md ]]; then
+            MARKDOWN_CONTENT=$(head -c 800 README.md | sed -e 's/#//g' -e 's/\*\*//g' -e 's/`//g')
+            PLAIN_TEXT="$MARKDOWN_CONTENT\n\nTo continue reading, visit: https://github.com/${{ github.repository }}/blob/master/README.md"
+          else
+            PLAIN_TEXT="README.md could not be loaded. To view documentation, visit: https://github.com/${{ github.repository }}"
+          fi
 
-      - name: Create and Push New Git Tag
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git tag "$NEW_TAG"
-          git push origin "$NEW_TAG"
-
-      - name: Create GitHub Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release create "$NEW_TAG" \
-            --title "Release $NEW_TAG" \
-            --notes "Automated release generated for $NEW_TAG."
+          delimiter=$(openssl rand -hex 6)
+          echo "PLAIN_TEXT<<${delimiter}" >> $GITHUB_ENV
+          echo "$PLAIN_TEXT" >> $GITHUB_ENV
+          echo "${delimiter}" >> $GITHUB_ENV
+          echo "::set-output name=PLAIN_TEXT::$PLAIN_TEXT"
 
   notify_discord:
     runs-on: ubuntu-latest
@@ -88,8 +72,12 @@ jobs:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_MASTER_URL }}
           REPO: ${{ github.repository }}
           TIMESTAMP: ${{ github.event.head_commit.timestamp }}
+          NEW_TAG: ${{ needs.tag_and_release.outputs.NEW_TAG }}
+          PLAIN_TEXT: ${{ needs.tag_and_release.outputs.PLAIN_TEXT }}
         run: |
-          JSON_PAYLOAD=$(jq -n \
+          echo "Sending Discord notification for tag: $NEW_TAG"  # Debugging step
+
+          JSON_PAYLOAD=$(jq -n --rawfile markdown_text <(echo "$PLAIN_TEXT") \
             --arg timestamp "$TIMESTAMP" \
             --arg repo "$REPO" \
             --arg tag "$NEW_TAG" \
@@ -112,6 +100,11 @@ jobs:
                       "inline": false
                     },
                     {
+                      "name": "📜 Documentation Preview",
+                      "value": $markdown_text,
+                      "inline": false
+                    },
+                    {
                       "name": "🏷️ Tag",
                       "value": "\($tag)",
                       "inline": false
@@ -120,5 +113,8 @@ jobs:
                 }
               ]
             }')
+
+          echo "JSON Payload being sent to Discord:"
+          echo "$JSON_PAYLOAD" | jq .  # Debugging
 
           curl -H "Content-Type: application/json" -X POST -d "$JSON_PAYLOAD" "$DISCORD_WEBHOOK_URL"
