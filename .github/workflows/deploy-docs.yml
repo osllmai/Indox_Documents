@@ -12,49 +12,68 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Enable Debug Logging
-        run: echo "ACTIONS_STEP_DEBUG=true" >> $GITHUB_ENV
+      - name: ✅ Enable Debug Logging
+        run: |
+          echo "ACTIONS_STEP_DEBUG=true" >> $GITHUB_ENV
+          echo "✅ Debug logging enabled."
 
-      - name: Checkout Repository
+      - name: ✅ Checkout Repository
         uses: actions/checkout@v3
         with:
           ref: master  # Ensures master branch is used
+        continue-on-error: false
 
-      - name: Set up Node.js
+      - name: ✅ Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: "20"
 
-      - name: Install Dependencies
+      - name: ✅ Install Dependencies
         run: |
           cd indoxDocs/classic
           echo "📦 Running npm install..."
-          npm install 2>&1 | tee npm_install.log || echo "⚠️ npm install failed!"
-          echo "✅ npm install completed."
+          if npm install 2>&1 | tee npm_install.log; then
+            echo "✅ npm install completed successfully."
+          else
+            echo "❌ npm install failed!" && exit 1
+          fi
 
-      - name: Debug: List Installed Dependencies
+      - name: ✅ Debug: List Installed Dependencies
         run: |
           echo "📂 Checking installed dependencies..."
-          ls -la indoxDocs/classic/node_modules/ || echo "⚠️ Dependencies are missing!"
+          if ls -la indoxDocs/classic/node_modules/; then
+            echo "✅ Dependencies are installed."
+          else
+            echo "❌ Dependencies are missing!" && exit 1
+          fi
 
-      - name: Build Documentation (With Debugging)
+      - name: ✅ Build Documentation (With Debugging)
         run: |
           cd indoxDocs/classic
           echo "📦 Running npm run build..."
-          npm run build 2>&1 | tee build_docs.log || echo "⚠️ Build failed!"
-          echo "✅ Build completed."
+          if npm run build 2>&1 | tee build_docs.log; then
+            echo "✅ Build completed successfully."
+          else
+            echo "❌ Build failed!" && exit 1
+          fi
 
-      - name: Debug: Check What’s Built
+      - name: ✅ Debug: Check What’s Built
         run: |
           echo "📂 Checking all generated files..."
           find indoxDocs/classic/ -type d -print  # Show all folders created
           ls -la indoxDocs/classic/  # List main directory contents
-          ls -la indoxDocs/classic/build/ || echo "⚠️ No build/ folder found!"
+          if [ -d "indoxDocs/classic/build/" ]; then
+            echo "✅ Build directory exists."
+          else
+            echo "❌ Build directory is missing!" && exit 1
+          fi
 
-      - name: Ensure Build Directory Exists
-        run: mkdir -p indoxDocs/classic/build/  # Prevents missing directory errors
+      - name: ✅ Ensure Build Directory Exists
+        run: |
+          mkdir -p indoxDocs/classic/build/
+          echo "✅ Build directory ensured."
 
-      - name: Upload to FTP Server
+      - name: ✅ Upload to FTP Server
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -63,7 +82,7 @@ jobs:
           local-dir: indoxDocs/classic/build/  # Uploads only the build directory
           server-dir: /public_html/  # Adjust based on your FTP server
 
-      - name: Capture Logs if Failure Occurs
+      - name: 🚨 Capture Logs if Failure Occurs
         if: ${{ failure() }}
         run: |
           echo "🚨 ERROR DETECTED!"
@@ -74,6 +93,10 @@ jobs:
           cat indoxDocs/classic/build_docs.log || echo "⚠️ No build-docs log found."
 
           echo "📂 Checking Final Build Directory Contents:"
-          ls -la indoxDocs/classic/build/ || echo "⚠️ Build folder missing!"
+          if [ -d "indoxDocs/classic/build/" ]; then
+            echo "✅ Build directory exists."
+          else
+            echo "❌ Build directory is missing!"
+          fi
 
           echo "🚨 Deployment failed! Check logs above for details."
