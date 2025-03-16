@@ -17,6 +17,12 @@ jobs:
           echo "ACTIONS_STEP_DEBUG=true" >> $GITHUB_ENV
           echo "✅ Debug logging enabled."
 
+      - name: ✅ Install `lftp` (for FTP Cleanup)
+        run: |
+          echo "📦 Installing lftp..."
+          sudo apt-get update && sudo apt-get install -y lftp
+          echo "✅ lftp installed successfully."
+
       - name: ✅ Checkout Repository
         uses: actions/checkout@v3
         with:
@@ -76,10 +82,11 @@ jobs:
           echo "📂 Contents of build directory before FTP upload:"
           ls -laR indoxDocs/classic/build/
 
-      - name: 🚨 Clean Up Existing Files on Server
+      - name: 🚨 Clean Up Existing Files on Server (Before Upload)
         run: |
           echo "🚨 Connecting to FTP server and deleting all files before uploading..."
-          lftp -e "set ftp:ssl-allow no; open ${{ secrets.FTP_SERVER }} -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }}; mirror -R --delete-empty-dirs --verbose --remove-first docs.osllm.ai/public_html/; bye"
+          lftp -c "set ftp:ssl-allow no; open ${{ secrets.FTP_SERVER }} -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }}; rm -r docs.osllm.ai/public_html/*; bye"
+          echo "✅ Server cleanup completed."
 
       - name: ✅ Upload New Build to FTP Server
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
