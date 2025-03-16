@@ -1,74 +1,134 @@
-name: GitHub Auto Tag & Release with Discord Notification
+name: GitHub to Discord Notification (Master)
 
 on:
   push:
-    branches: [ "master", "development" ]
+    branches: [ "master" ]
   workflow_dispatch:
 
-permissions:
-  contents: write  # Ensures GitHub Actions can push tags and create releases
-
 jobs:
-  tag_and_release:
+  notify_discord:
     runs-on: ubuntu-latest
-    outputs:
-      NEW_TAG: ${{ steps.versioning.outputs.NEW_TAG }}
     steps:
 
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Ensure we fetch all tags
+          clean: false
 
-      - name: Fetch Latest Tag and Determine Next Version
-        id: versioning
+      - name: Gather Deployment Information
+        id: gather_info
         run: |
-          git fetch --tags
-          LATEST_TAG=$(git tag -l "v*-${LABEL}" --sort=-v:refname | head -n 1 | tr -d '\r')
+          TIMESTAMP=$(date -u "+%A, %B %d %Y, %I:%M:%S %p UTC")
+          TAG_NAME="v$(date +'%Y%m%d-%H%M%S')"
+          VERSION_NAME="$(date +'%Y.%m.%d')"
+          
+          echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
+          echo "REPO=${{ github.repository }}" >> $GITHUB_ENV
+          echo "MARKDOWN_URL=https://github.com/osllmai/Indox_Documents/blob/master/README.md" >> $GITHUB_ENV
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
 
-          if [[ -z "$LATEST_TAG" ]]; then
-            NEW_TAG="v0.1.0-${LABEL}"
-          else
-            if [[ "$LATEST_TAG" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)-${LABEL}$ ]]; then
-              MAJOR="${BASH_REMATCH[1]}"
-              MINOR="${BASH_REMATCH[2]}"
-              PATCH="${BASH_REMATCH[3]}"
-            else
-              echo "Error: Could not parse latest tag '$LATEST_TAG'"
-              exit 1
-            fi
+      - name: Load README.md Content
+        id: load_markdown
+        run: |
+          # Read local README.md and limit to 800 characters
+          MARKDOWN_CONTENT=$(cat README.md | head -c 800)
 
-            PATCH=$((PATCH + 1))
-            NEW_TAG="v$MAJOR.$MINOR.$PATCH-${LABEL}"
+          # Remove Markdown formatting (e.g., #, **, etc.)
+          PLAIN_TEXT=$(echo "$MARKDOWN_CONTENT" | sed -e 's/#//g' -e 's/\*\*//g' -e 's/`//g')
+
+          # Add "Continue reading" link at the end
+          PLAIN_TEXT="$PLAIN_TEXT\n\nTo continue reading, please visit: https://github.com/osllmai/Indox_Documents"
+
+          # Fallback if empty
+          if [ -z "$PLAIN_TEXT" ]; then
+            PLAIN_TEXT="README.md could not be loaded. To view the documentation, please visit: https://github.com/osllmai/Indox_Documents"
           fi
 
-          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
-          echo "::set-output name=NEW_TAG::$NEW_TAG"
+          # Store with heredoc to handle newlines
+          delimiter=$(openssl rand -hex 6)
+          echo "PLAIN_TEXT<<${delimiter}" >> $GITHUB_ENV
+          echo "$PLAIN_TEXT" >> $GITHUB_ENV
+          echo "${delimiter}" >> $GITHUB_ENV
 
-      - name: Create and Push New Git Tag
+      - name: Create and Push Git Tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-
-          if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
-            echo "Tag $NEW_TAG already exists. Skipping tagging."
-          else
-            echo "Creating new tag: $NEW_TAG"
-            git tag "$NEW_TAG"
-            git push origin "$NEW_TAG" || echo "Tag push failed!"
-          fi
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
 
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if gh release view "$NEW_TAG" >/dev/null 2>&1; then
-            echo "Release $NEW_TAG already exists. Skipping."
-          else
-            echo "Creating GitHub Release for $NEW_TAG"
-            gh release create "$NEW_TAG" \
-              --title "Release $NEW_TAG" \
-              --notes "Automated release generated for $NEW_TAG."
-          fi
+          gh release create $TAG_NAME \
+            --title "Release $VERSION_NAME" \
+            --notes "Automated release generated on $TIMESTAMP."
+
+      - name: Send GitHub Event Notification to Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_MASTER_URL }}
+        run: |
+          set -x  # Enable debugging
+          echo "Sending the following payload to Discord:"
+          echo "TIMESTAMP: $TIMESTAMP"
+          echo "REPO: $REPO"
+          echo "TAG_NAME: $TAG_NAME"
+          echo "VERSION_NAME: $VERSION_NAME"
+          echo "MARKDOWN_URL: $MARKDOWN_URL"
+          echo "PLAIN_TEXT (preview):"
+          echo "$PLAIN_TEXT"
+
+          JSON_PAYLOAD=$(jq -n \
+            --arg timestamp "$TIMESTAMP" \
+            --arg repo "$REPO" \
+            --arg markdown_url "$MARKDOWN_URL" \
+            --arg tag "$TAG_NAME" \
+            --arg version "$VERSION_NAME" \
+            --arg plain_text "$PLAIN_TEXT" \
+            '{
+              "username": "GitHub Bot",
+              "avatar_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+              "embeds": [
+                {
+                  "title": "🚀 Release \($version)",
+                  "description": "We are excited to announce the latest release of our project! This update includes key improvements and enhancements.",
+                  "fields": [
+                    {
+                      "name": "📅 Timestamp",
+                      "value": $timestamp,
+                      "inline": false
+                    },
+                    {
+                      "name": "📂 Repository",
+                      "value": "[\($repo)](https://github.com/\($repo))",
+                      "inline": false
+                    },
+                    {
+                      "name": "📜 Documentation",
+                      "value": "[Click here](\($markdown_url))\n\n\($plain_text)",
+                      "inline": false
+                    },
+                    {
+                      "name": "🏷️ Tag",
+                      "value": "\($tag) - \($timestamp)",
+                      "inline": false
+                    },
+                    {
+                      "name": "🚀 Version",
+                      "value": "Release \($version)",
+                      "inline": false
+                    }
+                  ]
+                }
+              ]
+            }')
+
+          # Validate JSON formatting before sending
+          echo "$JSON_PAYLOAD" | jq .
+
+          # Send to Discord webhook
+          curl -H "Content-Type: application/json" -X POST -d "$JSON_PAYLOAD" "$DISCORD_WEBHOOK_URL"
