@@ -28,16 +28,25 @@ jobs:
       - name: Install Dependencies
         run: |
           cd indoxDocs/classic
-          npm install || echo "⚠️ npm install failed!"
+          echo "📦 Running npm install..."
+          npm install 2>&1 | tee npm_install.log || echo "⚠️ npm install failed!"
+          echo "✅ npm install completed."
 
-      - name: Build Documentation
+      - name: Debug: List Installed Dependencies
+        run: |
+          echo "📂 Checking installed dependencies..."
+          ls -la indoxDocs/classic/node_modules/ || echo "⚠️ Dependencies are missing!"
+
+      - name: Build Documentation (With Debugging)
         run: |
           cd indoxDocs/classic
-          npm run build-docs || echo "⚠️ Build failed!"
+          echo "📦 Running npm run build-docs..."
+          npm run build-docs 2>&1 | tee build_docs.log || echo "⚠️ Build failed!"
+          echo "✅ Build completed."
 
       - name: Debug: Check What’s Built
         run: |
-          echo "📂 Checking generated files..."
+          echo "📂 Checking all generated files..."
           find indoxDocs/classic/ -type d -print  # Show all folders created
           ls -la indoxDocs/classic/  # List main directory contents
           ls -la indoxDocs/classic/build/ || echo "⚠️ No build/ folder found!"
@@ -53,3 +62,18 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: indoxDocs/classic/build/  # Uploads only the build directory
           server-dir: /public_html/  # Adjust based on your FTP server
+
+      - name: Capture Logs if Failure Occurs
+        if: failure()
+        run: |
+          echo "🚨 ERROR DETECTED!"
+          echo "📜 npm Install Log:"
+          cat indoxDocs/classic/npm_install.log || echo "⚠️ No npm install log found."
+
+          echo "📜 Build Docs Log:"
+          cat indoxDocs/classic/build_docs.log || echo "⚠️ No build-docs log found."
+
+          echo "📂 Checking Final Build Directory Contents:"
+          ls -la indoxDocs/classic/build/ || echo "⚠️ Build folder missing!"
+
+          echo "🚨 Deployment failed! Check logs above for details."
