@@ -37,18 +37,25 @@ jobs:
         run: |
           echo "🔍 DEBUG: Fetching latest tags..."
           git fetch --tags
-          LATEST_TAG=$(git tag -l "v*" --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 | tr -d '\r')
+          LATEST_TAG=$(git tag -l "v*" --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+(-Master)?$' | head -n 1 | tr -d '\r')
           echo "📌 Latest Tag Found: $LATEST_TAG"
 
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          SUFFIX=""
+
+          if [[ "$BRANCH_NAME" == "master" ]]; then
+            SUFFIX="-Master"
+          fi
+
           if [[ -z "$LATEST_TAG" ]]; then
-            NEW_TAG="v0.1.0"
+            NEW_TAG="v0.1.0$SUFFIX"
           else
-            if [[ "$LATEST_TAG" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            if [[ "$LATEST_TAG" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)(-Master)?$ ]]; then
               MAJOR="${BASH_REMATCH[1]}"
               MINOR="${BASH_REMATCH[2]}"
               PATCH="${BASH_REMATCH[3]}"
               PATCH=$((PATCH + 1))
-              NEW_TAG="v$MAJOR.$MINOR.$PATCH"
+              NEW_TAG="v$MAJOR.$MINOR.$PATCH$SUFFIX"
               echo "✅ Next Tag: $NEW_TAG"
             else
               echo "❌ ERROR: Could not parse latest tag '$LATEST_TAG'"
