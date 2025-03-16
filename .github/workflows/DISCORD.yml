@@ -46,11 +46,11 @@ jobs:
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
           echo "::set-output name=NEW_TAG::$NEW_TAG"
 
-      - name: Load README.md Content (First 700 Characters)
+      - name: Load README.md Content (First 800 Characters)
         id: load_markdown
         run: |
           if [[ -f README.md ]]; then
-            MARKDOWN_CONTENT=$(head -c 700 README.md)
+            MARKDOWN_CONTENT=$(head -c 800 README.md)
             PLAIN_TEXT="$MARKDOWN_CONTENT\n\n**[Continue Reading](https://github.com/${{ github.repository }}/blob/master/README.md)**"
           else
             PLAIN_TEXT="README.md could not be loaded. [Click here to view documentation](https://github.com/${{ github.repository }})"
@@ -77,10 +77,14 @@ jobs:
         run: |
           echo "Sending Discord notification for tag: $NEW_TAG"  # Debugging step
 
-          JSON_PAYLOAD=$(jq -n --argfile markdown_text <(echo "$PLAIN_TEXT") \
+          # Ensure multi-line PLAIN_TEXT is properly formatted for JSON
+          ESCAPED_TEXT=$(echo "$PLAIN_TEXT" | jq -Rs .)
+
+          JSON_PAYLOAD=$(jq -n \
             --arg timestamp "$TIMESTAMP" \
             --arg repo "$REPO" \
             --arg tag "$NEW_TAG" \
+            --arg markdown_text "$ESCAPED_TEXT" \
             '{
               "username": "GitHub Bot",
               "avatar_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
@@ -113,7 +117,6 @@ jobs:
                 }
               ]
             }')
-
 
           echo "JSON Payload being sent to Discord:"
           echo "$JSON_PAYLOAD" | jq .  # Debugging
