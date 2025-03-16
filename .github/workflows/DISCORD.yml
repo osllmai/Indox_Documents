@@ -13,13 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       NEW_TAG: ${{ steps.versioning.outputs.NEW_TAG }}
-      PLAIN_TEXT: ${{ steps.load_markdown.outputs.PLAIN_TEXT }}
     steps:
 
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Ensure full history
+          fetch-depth: 0  # Ensure we fetch all tags
 
       - name: Fetch Latest Tag and Determine Next Version
         id: versioning
@@ -46,79 +45,30 @@ jobs:
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
           echo "::set-output name=NEW_TAG::$NEW_TAG"
 
-      - name: Load README.md Content (First 800 Characters)
-        id: load_markdown
+      - name: Create and Push New Git Tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [[ -f README.md ]]; then
-            MARKDOWN_CONTENT=$(head -c 800 README.md)
-            PLAIN_TEXT="$MARKDOWN_CONTENT\n\n**[Continue Reading](https://github.com/${{ github.repository }}/blob/master/README.md)**"
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+
+          if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
+            echo "Tag $NEW_TAG already exists. Skipping tagging."
           else
-            PLAIN_TEXT="README.md could not be loaded. [Click here to view documentation](https://github.com/${{ github.repository }})"
+            echo "Creating new tag: $NEW_TAG"
+            git tag "$NEW_TAG"
+            git push origin "$NEW_TAG" || echo "Tag push failed!"
           fi
 
-          delimiter=$(openssl rand -hex 6)
-          echo "PLAIN_TEXT<<${delimiter}" >> $GITHUB_ENV
-          echo "$PLAIN_TEXT" >> $GITHUB_ENV
-          echo "${delimiter}" >> $GITHUB_ENV
-          echo "::set-output name=PLAIN_TEXT::$PLAIN_TEXT"
-
-  notify_discord:
-    runs-on: ubuntu-latest
-    needs: tag_and_release
-    steps:
-
-      - name: Send GitHub Event Notification to Discord
+      - name: Create GitHub Release
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_MASTER_URL }}
-          REPO: ${{ github.repository }}
-          TIMESTAMP: ${{ github.event.head_commit.timestamp }}
-          NEW_TAG: ${{ needs.tag_and_release.outputs.NEW_TAG }}
-          PLAIN_TEXT: ${{ needs.tag_and_release.outputs.PLAIN_TEXT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "Sending Discord notification for tag: $NEW_TAG"  # Debugging step
-
-          # Ensure multi-line PLAIN_TEXT is properly formatted for JSON
-          ESCAPED_TEXT=$(echo "$PLAIN_TEXT" | jq -Rs .)
-
-          JSON_PAYLOAD=$(jq -n \
-            --arg timestamp "$TIMESTAMP" \
-            --arg repo "$REPO" \
-            --arg tag "$NEW_TAG" \
-            --arg markdown_text "$ESCAPED_TEXT" \
-            '{
-              "username": "GitHub Bot",
-              "avatar_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
-              "embeds": [
-                {
-                  "title": "🚀 New Release: \($tag)",
-                  "description": "A new release has been created for the repository.",
-                  "fields": [
-                    {
-                      "name": "📅 Timestamp",
-                      "value": $timestamp,
-                      "inline": false
-                    },
-                    {
-                      "name": "📂 Repository",
-                      "value": "[\($repo)](https://github.com/\($repo))",
-                      "inline": false
-                    },
-                    {
-                      "name": "📜 Documentation Preview",
-                      "value": $markdown_text,
-                      "inline": false
-                    },
-                    {
-                      "name": "🏷️ Tag",
-                      "value": "\($tag)",
-                      "inline": false
-                    }
-                  ]
-                }
-              ]
-            }')
-
-          echo "JSON Payload being sent to Discord:"
-          echo "$JSON_PAYLOAD" | jq .  # Debugging
-
-          curl -H "Content-Type: application/json" -X POST -d "$JSON_PAYLOAD" "$DISCORD_WEBHOOK_URL"
+          if gh release view "$NEW_TAG" >/dev/null 2>&1; then
+            echo "Release $NEW_TAG already exists. Skipping."
+          else
+            echo "Creating GitHub Release for $NEW_TAG"
+            gh release create "$NEW_TAG" \
+              --title "Release $NEW_TAG" \
+              --notes "Automated release generated for $NEW_TAG."
+          fi
