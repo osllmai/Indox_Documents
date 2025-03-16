@@ -185,12 +185,22 @@ const config: Config = {
           items: [
             {
               label: "Discord",
-              href: "https://discord.gg/osllm",
+              href: "https://discord.com/invite/xGz5tQYaeq",
             },
             {
-              label: "Twitter",
-              href: "https://twitter.com/osllmai",
+              label: "X (Twitter)",
+              href: "https://x.com/osllmai",
             },
+            {
+              label: "LinkedIn",
+              href: "hhttps://github.com/osllmai/",
+            },
+            {
+              label: "YouTube",
+              href: "https://www.youtube.com/@@osllm-rb9pr",
+            }
+
+
           ],
         },
         {
