@@ -1,4 +1,4 @@
-name: Deploy Docs via FTP
+name: Deploy Indox Docs via FTP
 
 on:
   release:
@@ -26,7 +26,10 @@ jobs:
         run: npm install
 
       - name: Build Documentation
-        run: npm run build-docs  # Adjust to match your actual build command
+        run: |
+          cd indoxDocs/classic  # Navigate to the correct directory
+          npm install           # Ensure dependencies are installed
+          npm run build-docs    # Adjust this based on your actual build command
 
       - name: Upload to FTP Server
         uses: SamKirkland/FTP-Deploy-Action@v4
@@ -34,5 +37,5 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./docs/  # Adjust based on your build output
-          server-dir: /public_html/  # Ensures deployment to docs.osllm.ai/public_html
+          local-dir: indoxDocs/classic/build/  # Adjust based on where your build outputs files
+          server-dir: /public_html/  # Ensure this is correct for your FTP server
