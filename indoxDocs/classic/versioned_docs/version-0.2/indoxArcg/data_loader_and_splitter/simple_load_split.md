@@ -31,7 +31,7 @@ Initialize indoxArcg and QA models:
 
 ```python
 from indoxArcg.llms import OpenAiQA
-openai_qa = OpenAiQA(api_key=OPENAI_API_KEY, model="gpt-3.5-turbo-0125")
+openai_qa = OpenAiQA(api_key=OPENAI_API_KEY, model="GPT4-o")
 ```
 
 Perform the clustered split on the text file or PDF file:
@@ -60,7 +60,7 @@ from indoxArcg import indoxArcgRetrievalAugmentation
 indoxArcg = indoxArcgRetrievalAugmentation()
 
 from indoxArcg.llms import OpenAiQA
-openai_qa = OpenAiQA(api_key=OPENAI_API_KEY, model="gpt-3.5-turbo-0125")
+openai_qa = OpenAiQA(api_key=OPENAI_API_KEY, model="GPT4-o")
 
 from indoxArcg.data_loader_splitter import ClusteredSplit
 

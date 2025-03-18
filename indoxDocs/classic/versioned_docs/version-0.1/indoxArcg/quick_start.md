@@ -52,7 +52,7 @@ from indoxArcg.embeddings import OpenAiEmbedding
 ### Initialize indoxArcg
 
 ```python
-openai_qa = OpenAiQA(api_key=OPENAI_API_KEY,model="gpt-3.5-turbo-0125")
+openai_qa = OpenAiQA(api_key=OPENAI_API_KEY,model="GPT4-o")
 openai_embeddings = OpenAiEmbedding(model="text-embedding-3-small",openai_api_key=OPENAI_API_KEY)
 ```
 

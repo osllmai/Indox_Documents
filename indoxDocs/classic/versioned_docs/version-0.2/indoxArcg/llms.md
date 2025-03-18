@@ -67,7 +67,7 @@ class BaseLLM:
 
 ### 1. OpenAI
 
-Recommended Models: gpt-4-turbo, gpt-3.5-turbo
+Recommended Models: gpt-4-turbo, GPT4-o
 
 ```python
 from indoxArcg.llms import OpenAi

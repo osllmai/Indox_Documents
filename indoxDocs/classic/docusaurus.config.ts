@@ -59,12 +59,17 @@ const config: Config = {
           sidebarPath: "./sidebars.ts",
           // Remove the "edit this page" links
           editUrl: undefined,
-          lastVersion: "0.2",
-          onlyIncludeVersions: ["0.2", "0.1"],
+          lastVersion: "0.3",
+          onlyIncludeVersions: ["0.3", "0.2", "0.1"],
           versions: {
+            "0.3": {
+              label: "0.3 (Stable)",
+              path: "",
+              banner: "none",
+            },
             "0.2": {
               label: "0.2",
-              path: "",
+              path: "0.2",
               banner: "none",
             },
             "0.1": {
@@ -193,12 +198,17 @@ const config: Config = {
             },
             {
               label: "LinkedIn",
-              href: "hhttps://github.com/osllmai/",
+              href: "https://www.linkedin.com/company/osllmai/",
             },
             {
               label: "YouTube",
-              href: "https://www.youtube.com/@@osllm-rb9pr",
+              href: "https://www.youtube.com/@osllm-rb9pr",
+            },
+            {
+              label: "Telegram",
+              href: "https://t.me/osllmai",
             }
+
 
 
           ],
